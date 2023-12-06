@@ -3,29 +3,18 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>This is what Heaven looks like</title>
+    <title>WebGPU Life</title>
   </head>
-  <body style="display:block; margin:0; overflow:hidden;">
-    <canvas id="myCanvas" style="display:block; width:100vw; height:100vh;"></canvas>
+  <body>
+    <!-- <body style="display:block; margin:0;overflow:hidden;">
+        <canvas style="display:block;width:100vw;height:100vh;"></canvas> -->
+    <canvas width="512" height="512"></canvas>
     <script type="module">
-        // Get the canvas element
-        const canvas = document.getElementById('myCanvas');
-
-        // Function to resize the canvas to full window size
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-
-        // Resize the canvas when the window is resized
-        window.addEventListener('resize', resizeCanvas, false);
-
-        // Initial resize
-        resizeCanvas(); 
       
         const UPDATE_INTERVAL = 200; // Update every 200ms (5 times/sec)
         let step = 0; // Track how many simulation steps have been run
 
+        const canvas = document.querySelector("canvas");
         if (!navigator.gpu) {
             throw new Error("WebGPU not supported on this browser.");
         }
@@ -49,10 +38,9 @@
 
 
   
-        const GRID_SIZE = 128;
+        const GRID_SIZE = 32;
         // Create a uniform buffer that describes the grid.
-        const uniformArray = new Float32Array([canvas.width, canvas.height]);
-        console.log("Canvas width: " + canvas.width + " Canvas height: " + canvas.height);
+        const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
         const uniformBuffer = device.createBuffer({
         label: "Grid Uniforms",
         size: uniformArray.byteLength,
@@ -85,12 +73,12 @@
 
         const vertices = new Float32Array([
             //   X,    Y,
-            -1., -1., // Triangle 1 (Blue)
-            1., -1.,
-            1.,  1.,
-            -1., -1., // Triangle 2 (Red)
-            1.,  1.,
-            -1.,  1.,
+            -0.8, -0.8, // Triangle 1 (Blue)
+            0.8, -0.8,
+            0.8,  0.8,
+            -0.8, -0.8, // Triangle 2 (Red)
+            0.8,  0.8,
+            -0.8,  0.8,
         ]);
         const vertexBuffer = device.createBuffer({
             label: "Cell vertices", 
@@ -127,6 +115,10 @@
             @group(0) @binding(0) var<uniform> grid: vec2f;
             @group(0) @binding(1) var<storage> cellState: array<u32>;
             @group(0) @binding(2) var<storage, read_write> cellStateOut: array<u32>;
+            
+            // fn cellIndex(cell: vec2u) -> u32 {
+            //     return cell.y * u32(grid.x) + cell.x;
+            // }
 
             fn cellIndex(cell: vec2u) -> u32 {
                 return (cell.y % u32(grid.y)) * u32(grid.x) +
@@ -140,40 +132,52 @@
             @compute
             @workgroup_size(${WORKGROUP_SIZE}, ${WORKGROUP_SIZE})
             fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
-                let i = cellIndex(cell.xy);
-                cellStateOut[i] = 0;
+                let activeNeighbors = cellActive(cell.x+1, cell.y+1) +
+                        cellActive(cell.x+1, cell.y) +
+                        cellActive(cell.x+1, cell.y-1) +
+                        cellActive(cell.x, cell.y-1) +
+                        cellActive(cell.x-1, cell.y-1) +
+                        cellActive(cell.x-1, cell.y) +
+                        cellActive(cell.x-1, cell.y+1) +
+                        cellActive(cell.x, cell.y+1);
+                
+                        let i = cellIndex(cell.xy);
+
+                // Conway's game of life rules:
+                switch activeNeighbors {
+                case 2: { // Active cells with 2 neighbors stay active.
+                    cellStateOut[i] = cellState[i];
+                }
+                case 3: { // Cells with 3 neighbors become or stay active.
+                    cellStateOut[i] = 1;
+                }
+                default: { // Cells with < 2 or > 3 neighbors become inactive.
+                    cellStateOut[i] = 0;
+                }
             }
+        }
             
 
             @vertex
             fn vertexMain(@location(0) pos: vec2f, 
                           @builtin(instance_index) instance: u32) ->VertexOutput  {
+                let i = f32(instance); // Save the instance_index as a float
+                let state = f32(cellState[instance]); // New line!
+                var unit = 2 / grid.x;
+                var x = f32(instance / u32(grid.x));
+                var y = f32(instance % u32(grid.x));
+                var shift_x = (x + 1) * unit - unit / 2 - 1;
+                var shift_y = (y + 1) * unit - unit / 2 - 1;
+                var shift = vec2f(shift_x, shift_y);
                 var output: VertexOutput;
-                output.cell = vec2f(-1, -1);
-                output.pos = vec4f(pos, 0, 1);
+                output.cell = vec2f(x, y);
+                output.pos = vec4f((pos * state) / grid + shift, 0, 1);
                 return output;
             }
 
             @fragment
             fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
-                if (abs(input.pos.x - grid.x / 2) <= 1 || abs(input.pos.y - grid.y / 2) <= 1) {
-                    return vec4f(0.0, 1.0, 0.0, 1.0);
-                }
-                var r = (input.pos.x - f32(grid.x) / 2) / (grid.x / 4.0);
-                var i = (input.pos.y - f32(grid.y) / 2) / (grid.x / 4.0);
-                var iterations = 256;
-                // Do the mandelbrot iterations
-                var z_init = vec2f(r, i);
-                var z = vec2f(r, i);
-                for (var j = 0; j < iterations; j++) {
-                    var r2 = z[0] * z[0];
-                    var i2 = z[1] * z[1];
-                    if (r2 + i2 > 4.0){
-                        return vec4f(1.0, 1.0, 1.0, 1.0);
-                    }
-                    z = vec2f(r2 - i2, 2 * z[0] * z[1]) + z_init;
-                }
-                return vec4f(0.0, 0.0, 0.0, 1.0);
+                return vec4f(input.cell / grid, 1 - input.cell.x / grid.x, 1);
             }
             `
         });
@@ -284,7 +288,7 @@
             pass.setPipeline(cellPipeline);
             pass.setBindGroup(0, bindGroups[step % 2]); // Updated!
             pass.setVertexBuffer(0, vertexBuffer);
-            pass.draw(vertices.length / 2, 1);
+            pass.draw(vertices.length / 2, GRID_SIZE * GRID_SIZE);
 
             // End the render pass and submit the command buffer
             pass.end();
