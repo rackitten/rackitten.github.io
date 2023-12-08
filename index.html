@@ -23,7 +23,7 @@
         // Initial resize
         resizeCanvas(); 
       
-        const UPDATE_INTERVAL = 200; // Update every 200ms (5 times/sec)
+        const UPDATE_INTERVAL = 40; // Update every 200ms (5 times/sec)
         let step = 0; // Track how many simulation steps have been run
 
         if (!navigator.gpu) {
@@ -60,7 +60,7 @@
         });
         device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
         // Create an array representing the active state of each cell.
-        const cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
+        const cellStateArray = new Float32Array(1);
         // Create two storage buffers to hold the cell state.
         const cellStateStorage = [
             device.createBuffer({
@@ -78,9 +78,12 @@
         // Set each cell to a random state, then copy the JavaScript array 
         // into the storage buffer.
         for (let i = 0; i < cellStateArray.length; ++i) {
-            cellStateArray[i] = Math.random() > 0.6 ? 1 : 0;
+            cellStateArray[i] = 1.;
         }
+        
+        // cellStateArray[0] = 1.;
         device.queue.writeBuffer(cellStateStorage[0], 0, cellStateArray);
+        // cellStateArray[0] = 1.;
         device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
 
         const vertices = new Float32Array([
@@ -125,23 +128,14 @@
             };
 
             @group(0) @binding(0) var<uniform> grid: vec2f;
-            @group(0) @binding(1) var<storage> cellState: array<u32>;
-            @group(0) @binding(2) var<storage, read_write> cellStateOut: array<u32>;
-
-            fn cellIndex(cell: vec2u) -> u32 {
-                return (cell.y % u32(grid.y)) * u32(grid.x) +
-                (cell.x % u32(grid.x));
-            }
-
-            fn cellActive(x: u32, y: u32) -> u32 {
-                return cellState[cellIndex(vec2(x, y))];
-            }
+            @group(0) @binding(1) var<storage> cellState: array<f32>;
+            @group(0) @binding(2) var<storage, read_write> cellStateOut: array<f32>;
+ 
 
             @compute
             @workgroup_size(${WORKGROUP_SIZE}, ${WORKGROUP_SIZE})
             fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
-                let i = cellIndex(cell.xy);
-                cellStateOut[i] = 0;
+                cellStateOut[0] = cellState[0] * 1.01;
             }
             
 
@@ -154,26 +148,46 @@
                 return output;
             }
 
+            const minColor = vec3<f32>(0.0, 0.0, 1.0); // Blue
+            const maxColor = vec3<f32>(1.0, 0.0, 0.0); // Red
+
+            // This function interpolates between two colors
+            fn interpolateInSet(minColor: vec3<f32>, maxColor: vec3<f32>, factor: f32) -> vec3<f32> {
+                return minColor + factor * (maxColor - minColor);
+            }
+
+            fn interpolateOutSet(minColor: vec3<f32>, maxColor: vec3<f32>, factor: f32) -> vec3<f32> {
+                return minColor + factor * (maxColor - minColor);
+            }
+
             @fragment
             fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
                 if (abs(input.pos.x - grid.x / 2) <= 1 || abs(input.pos.y - grid.y / 2) <= 1) {
                     return vec4f(0.0, 1.0, 0.0, 1.0);
                 }
-                var r = (input.pos.x - f32(grid.x) / 2) / (grid.x / 4.0);
-                var i = (input.pos.y - f32(grid.y) / 2) / (grid.x / 4.0);
-                var iterations = 256;
+                var r = (input.pos.x - f32(grid.x) / 2) / (grid.x / 4.0 * f32(cellState[0]));
+                var i = (input.pos.y - f32(grid.y) / 2) / (grid.x / 4.0 * f32(cellState[0]));
+                var iterations = 30;
+                var maxDelta = 4.0;
                 // Do the mandelbrot iterations
                 var z_init = vec2f(r, i);
                 var z = vec2f(r, i);
+                var prev = 0.0;
+                var prev_2 = 0.0;
                 for (var j = 0; j < iterations; j++) {
                     var r2 = z[0] * z[0];
                     var i2 = z[1] * z[1];
                     if (r2 + i2 > 4.0){
-                        return vec4f(1.0, 1.0, 1.0, 1.0);
+                        let color = interpolateOutSet(maxColor, minColor, abs(prev - prev_2) / maxDelta);
+                        return vec4f(color, 1.0);
                     }
                     z = vec2f(r2 - i2, 2 * z[0] * z[1]) + z_init;
+                    prev_2 = prev;
+                    prev = r2 + i2;
                 }
-                return vec4f(0.0, 0.0, 0.0, 1.0);
+                let color = interpolateInSet(minColor, maxColor, abs(prev - prev_2) / maxDelta);
+
+                return vec4f(color, 1.0);
             }
             `
         });
@@ -186,11 +200,11 @@
                 buffer: {} // Grid uniform buffer
             }, {
                 binding: 1,
-                visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE,
+                visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE | GPUShaderStage.FRAGMENT,
                 buffer: { type: "read-only-storage"} // Cell state input buffer
             }, {
                 binding: 2,
-                visibility: GPUShaderStage.COMPUTE,
+                visibility: GPUShaderStage.COMPUTE | GPUShaderStage.FRAGMENT,
                 buffer: { type: "storage"} // Cell state output buffer
             }]
         });
