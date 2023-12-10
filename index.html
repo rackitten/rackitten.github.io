@@ -10,7 +10,7 @@
     <script type="module">
         // Get the canvas element
         const canvas = document.getElementById('myCanvas');
-
+        
         // Function to resize the canvas to full window size
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -22,8 +22,12 @@
 
         // Initial resize
         resizeCanvas(); 
+        let xx = window.innerWidth / 2;
+        let yy = window.innerHeight / 2;
+        console.log("xx", xx, yy);
+
       
-        const UPDATE_INTERVAL = 40; // Update every 200ms (5 times/sec)
+        const UPDATE_INTERVAL = 50; // Update every 200ms (5 times/sec)
         let step = 0; // Track how many simulation steps have been run
 
         if (!navigator.gpu) {
@@ -60,7 +64,7 @@
         });
         device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
         // Create an array representing the active state of each cell.
-        const cellStateArray = new Float32Array(1);
+        const cellStateArray = new Float32Array(2 * 4 + 2 + 1); // four corners, plus click center plus zoom
         // Create two storage buffers to hold the cell state.
         const cellStateStorage = [
             device.createBuffer({
@@ -74,17 +78,42 @@
                 usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
             })
         ];
-
         // Set each cell to a random state, then copy the JavaScript array 
         // into the storage buffer.
         for (let i = 0; i < cellStateArray.length; ++i) {
             cellStateArray[i] = 1.;
         }
-        
+        // Top left, bottom left, bottom right, top right
+        // Top left
+        cellStateArray[0] = -window.innerWidth / window.innerWidth / 0.5;
+        cellStateArray[1] = window.innerHeight / window.innerWidth / 0.5;
+        // Bottom left
+        cellStateArray[2] = -window.innerWidth / window.innerWidth / 0.5;
+        cellStateArray[3] = -window.innerHeight / window.innerWidth / 0.5;
+        // Bottom right
+        cellStateArray[4] = window.innerWidth / window.innerWidth / 0.5;
+        cellStateArray[5] = -window.innerHeight / window.innerWidth / 0.5;
+        // Top right
+        cellStateArray[6] = window.innerWidth / window.innerWidth / 0.5;
+        cellStateArray[7] = window.innerHeight / window.innerWidth / 0.5;
+
+        cellStateArray[8] = xx;
+        cellStateArray[9] = yy;
+                    
         // cellStateArray[0] = 1.;
         device.queue.writeBuffer(cellStateStorage[0], 0, cellStateArray);
         // cellStateArray[0] = 1.;
         device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
+
+        canvas.addEventListener('click', (event) => {
+            xx = event.clientX;
+            yy = event.clientY;
+            cellStateArray[8] = xx;
+            cellStateArray[9] = yy;
+            device.queue.writeBuffer(cellStateStorage[0], 32, cellStateArray, 8);
+            device.queue.writeBuffer(cellStateStorage[1], 32, cellStateArray, 8);
+            console.log(`Click coordinates: X=${xx}, Y=${yy}`);
+         });
 
         const vertices = new Float32Array([
             //   X,    Y,
@@ -135,7 +164,51 @@
             @compute
             @workgroup_size(${WORKGROUP_SIZE}, ${WORKGROUP_SIZE})
             fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
-                cellStateOut[0] = cellState[0] * 1.01;
+                // four corners, plus click center plus zoom
+                var tl_cart = vec2<f32>(cellState[0], cellState[1]);
+                var bl_cart = vec2<f32>(cellState[2], cellState[3]);
+                var br_cart = vec2<f32>(cellState[4], cellState[5]);
+                var tr_cart = vec2<f32>(cellState[6], cellState[7]);
+                var click_pixels = vec2<f32>(cellState[8], -cellState[9]);
+                var zoom = 1.01;
+
+                // Zoom all corners in towards the center
+
+                // First calculate center in cartesian
+                var click_normalized = click_pixels / grid; // click_normalized is now in range (0, 1)
+                var x = click_normalized[0];
+                var y = click_normalized[1];
+                var width = tr_cart[0] - tl_cart[0];
+                var height = bl_cart[1] - tl_cart[1];
+                var center_cart = vec2<f32>(x * width + bl_cart[0], y * height + bl_cart[1]);
+
+                var move_vector = center_cart - (tl_cart + br_cart) / 2;
+
+                // Zoom by shift, scale, shift back
+                var zoomed_tl = (tl_cart - center_cart) * 1 / zoom + center_cart + move_vector;
+                var zoomed_bl = (bl_cart - center_cart) * 1 / zoom + center_cart + move_vector;
+                var zoomed_br = (br_cart - center_cart) * 1 / zoom + center_cart + move_vector;
+                var zoomed_tr = (tr_cart - center_cart) * 1 / zoom + center_cart + move_vector;
+
+
+                //zoomed_tl += center_cart;
+                //var zoomed_tl = tl_cart;
+                //var zoomed_bl = bl_cart;
+                //var zoomed_br = br_cart;
+                //var zoomed_tr = tr_cart;
+
+
+                cellStateOut[0] = zoomed_tl[0];
+                cellStateOut[1] = zoomed_tl[1];
+                cellStateOut[2] = zoomed_bl[0];
+                cellStateOut[3] = zoomed_bl[1];
+                cellStateOut[4] = zoomed_br[0];
+                cellStateOut[5] = zoomed_br[1];
+                cellStateOut[6] = zoomed_tr[0];
+                cellStateOut[7] = zoomed_tr[1];
+                // Set the click to be in the center
+                cellStateOut[8] = grid.x / 2;
+                cellStateOut[9] = grid.y / 2;
             }
             
 
@@ -162,14 +235,31 @@
 
             @fragment
             fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
-                if (abs(input.pos.x - grid.x / 2) <= 1 || abs(input.pos.y - grid.y / 2) <= 1) {
-                    return vec4f(0.0, 1.0, 0.0, 1.0);
+                var tl_cart = vec2<f32>(cellState[0], cellState[1]);
+                var bl_cart = vec2<f32>(cellState[2], cellState[3]);
+                var br_cart = vec2<f32>(cellState[4], cellState[5]);
+                var tr_cart = vec2<f32>(cellState[6], cellState[7]);
+
+                var x = input.pos.x / grid.x;
+                var y = -input.pos.y / grid.y;
+                var width = tr_cart[0] - tl_cart[0];
+                var height = bl_cart[1] - tl_cart[1];
+                var cart = vec2<f32>(x * width + bl_cart[0], y * height + bl_cart[1]);
+
+                var r = cart.x;
+                var i = cart.y;
+
+    
+                // Draw some grid lines, just for fun
+                if (abs(r) <= .002 || abs(i) <= .002) {
+                     return vec4f(0.0, 1.0, 0.0, 1.0);
                 }
-                var r = (input.pos.x - f32(grid.x) / 2) / (grid.x / 4.0 * f32(cellState[0]));
-                var i = (input.pos.y - f32(grid.y) / 2) / (grid.x / 4.0 * f32(cellState[0]));
+
                 var iterations = 30;
                 var maxDelta = 4.0;
+
                 // Do the mandelbrot iterations
+
                 var z_init = vec2f(r, i);
                 var z = vec2f(r, i);
                 var prev = 0.0;
