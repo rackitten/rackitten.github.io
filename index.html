@@ -27,25 +27,29 @@
       /* Tooltip text */
       .tooltip .tooltiptext {
         visibility: hidden;
-        width: 120px;
+        width: 180px; /* Wider tooltip container */
         background-color: #555;
         color: #fff;
         text-align: center;
         border-radius: 6px;
-        padding: 5px 0;
+        padding: 8px; /* Added padding */
+        /* Position the tooltip */
         position: absolute;
         z-index: 1;
-        bottom: 125%;
+        bottom: -5px; /* Adjust this value to move the tooltip up or down */
         left: 50%;
-        margin-left: -60px;
+        transform: translateX(-50%) translateY(100%);
+        font-size: 14px; /* Smaller text size */
+        box-shadow: 0px 0px 10px 0px rgba(0, 255, 0, 0.5); /* Optional: Adding a slight glow effect */
         opacity: 0;
-        transition: opacity 0.3s, visibility 0.3s; /* Customize the delay here */
+        transition: opacity 0.3s, visibility 0.3s, transform 0.3s; /* Smooth transitions for visibility and position */
       }
 
       /* Show the tooltip text when you mouse over the tooltip container */
       .tooltip:hover .tooltiptext {
         visibility: visible;
         opacity: 1;
+        transform: translateX(-50%) translateY(110%); /* Adjust translate to move tooltip below button */
       }
 
       .option-btn {
@@ -160,6 +164,24 @@
         // Set custom tooltips
         tooltip1.textContent = valueObj1.definition;
         tooltip2.textContent = valueObj2.definition;
+
+        option1.onmouseover = function () {
+          tooltip1.style.visibility = "visible";
+          tooltip1.style.opacity = "1";
+        };
+        option1.onmouseout = function () {
+          tooltip1.style.visibility = "hidden";
+          tooltip1.style.opacity = "0";
+        };
+
+        option2.onmouseover = function () {
+          tooltip2.style.visibility = "visible";
+          tooltip2.style.opacity = "1";
+        };
+        option2.onmouseout = function () {
+          tooltip2.style.visibility = "hidden";
+          tooltip2.style.opacity = "0";
+        };
 
         option1.onclick = function () {
           updateELO(valueObj1.value, valueObj2.value);
