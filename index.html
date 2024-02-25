@@ -1,11 +1,194 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>Hello World</title>
-</head>
-<body>
-    <h1>Hello World</h1>
-</body>
-</html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Value Comparator</title>
+    <style>
+      body,
+      button,
+      div,
+      h1 {
+        font-family: "Courier New", monospace;
+        color: #0f0;
+        background-color: #000;
+      }
 
+      #app {
+        text-align: center;
+        padding: 20px;
+      }
+      /* Tooltip container */
+      .tooltip {
+        position: relative;
+        display: inline-block;
+      }
+
+      /* Tooltip text */
+      .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 120px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px 0;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -60px;
+        opacity: 0;
+        transition: opacity 0.3s, visibility 0.3s; /* Customize the delay here */
+      }
+
+      /* Show the tooltip text when you mouse over the tooltip container */
+      .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .option-btn {
+        margin: 10px;
+        background-color: #222;
+        color: #0f0;
+        border: 1px solid #0f0;
+        padding: 20px 40px;
+        cursor: pointer;
+        font-size: 24px;
+        display: inline-block; /* Changed to inline-block */
+        text-align: center;
+      }
+
+      .option-btn:hover {
+        background-color: #333;
+      }
+
+      #question h1 {
+        margin-bottom: 30px;
+        font-size: 32px;
+      }
+
+      #options {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+      }
+
+      #ranking {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="question">
+        <h1>Which is more important to you?</h1>
+      </div>
+      <!-- Add the tooltip container and text to each button -->
+      <div id="options">
+        <div class="tooltip">
+          <button id="option1" class="option-btn"></button>
+          <span class="tooltiptext" id="tooltip1"></span>
+        </div>
+        <div>or</div>
+        <div class="tooltip">
+          <button id="option2" class="option-btn"></button>
+          <span class="tooltiptext" id="tooltip2"></span>
+        </div>
+      </div>
+      <div id="ranking"></div>
+    </div>
+    <script>
+      const values = [
+        {
+          value: "Simplicity",
+          definition: "The quality of being easily understood or done.",
+        },
+        {
+          value: "Wisdom",
+          definition:
+            "The ability to use knowledge and experience to make good decisions.",
+        },
+        {
+          value: "Courage",
+          definition: "The ability to do something that frightens one.",
+        },
+      ];
+
+      const eloScores = JSON.parse(localStorage.getItem("eloScores")) || {};
+      const K = 32;
+
+      values.forEach((valueObj) => {
+        if (!eloScores[valueObj.value]) eloScores[valueObj.value] = 1200;
+      });
+
+      function updateELO(winner, loser) {
+        const winnerScore = eloScores[winner];
+        const loserScore = eloScores[loser];
+        const expectedWinner =
+          1 / (1 + 10 ** ((loserScore - winnerScore) / 400));
+        const expectedLoser =
+          1 / (1 + 10 ** ((winnerScore - loserScore) / 400));
+
+        eloScores[winner] += K * (1 - expectedWinner);
+        eloScores[loser] += K * (0 - expectedLoser);
+
+        localStorage.setItem("eloScores", JSON.stringify(eloScores));
+      }
+
+      function pickValues() {
+        let index1 = Math.floor(Math.random() * values.length);
+        let index2 = Math.floor(Math.random() * values.length);
+        while (index1 === index2) {
+          index2 = Math.floor(Math.random() * values.length);
+        }
+        return [values[index1], values[index2]];
+      }
+
+      function updateQuestion() {
+        const [valueObj1, valueObj2] = pickValues();
+        const option1 = document.getElementById("option1");
+        const option2 = document.getElementById("option2");
+        const tooltip1 = document.getElementById("tooltip1");
+        const tooltip2 = document.getElementById("tooltip2");
+
+        option1.textContent = valueObj1.value;
+        option2.textContent = valueObj2.value;
+
+        // Set custom tooltips
+        tooltip1.textContent = valueObj1.definition;
+        tooltip2.textContent = valueObj2.definition;
+
+        option1.onclick = function () {
+          updateELO(valueObj1.value, valueObj2.value);
+          updateQuestion();
+          updateRanking();
+        };
+
+        option2.onclick = function () {
+          updateELO(valueObj2.value, valueObj1.value);
+          updateQuestion();
+          updateRanking();
+        };
+      }
+
+      function updateRanking() {
+        const rankingDiv = document.getElementById("ranking");
+        rankingDiv.innerHTML = "<h2>Ranking</h2>";
+        const sortedValues = Object.keys(eloScores).sort(
+          (a, b) => eloScores[b] - eloScores[a]
+        );
+        sortedValues.forEach((value) => {
+          const div = document.createElement("div");
+          div.textContent = `${value}: ${eloScores[value].toFixed(0)}`;
+          rankingDiv.appendChild(div);
+        });
+      }
+
+      updateQuestion();
+      updateRanking();
+    </script>
+  </body>
+</html>
