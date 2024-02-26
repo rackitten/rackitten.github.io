@@ -64,7 +64,16 @@
       .option-btn:hover {
         background-color: #333;
       }
-
+      .info-btn {
+        display: block; /* Or inline-block, depending on your layout */
+        margin: 5px auto; /* Centers the button if the parent is .tooltip */
+        padding: 5px;
+        font-size: 18px;
+        background-color: #333; /* Match your design */
+        color: #0f0;
+        border: 1px solid #0f0;
+        cursor: pointer;
+      }
       #question h1 {
         margin-bottom: 30px;
         font-size: 32px;
@@ -108,14 +117,24 @@
         <h1>Which is more important to you?</h1>
       </div>
       <div id="options">
-        <div class="tooltip">
+        <div>
           <button id="option1" class="option-btn"></button>
-          <span class="tooltiptext" id="tooltip1"></span>
+          <div class="tooltip">
+            <button class="info-btn" onclick="showDefinition('tooltip1')">
+              ?
+            </button>
+            <span class="tooltiptext" id="tooltip1"></span>
+          </div>
         </div>
         <div>or</div>
-        <div class="tooltip">
+        <div>
           <button id="option2" class="option-btn"></button>
-          <span class="tooltiptext" id="tooltip2"></span>
+          <div class="tooltip">
+            <button class="info-btn" onclick="showDefinition('tooltip2')">
+              ?
+            </button>
+            <span class="tooltiptext" id="tooltip2"></span>
+          </div>
         </div>
       </div>
       <div id="ranking"></div>
@@ -214,7 +233,9 @@
         localStorage.setItem("totalQuestions", totalQuestions.toString());
         localStorage.setItem("comparedPairs", JSON.stringify(comparedPairs));
       }
-
+      function showDefinition(tooltipId) {
+        const tooltipText = document.getElementById(tooltipId).textContent;
+      }
       function loadState() {
         const savedValueGraph = localStorage.getItem("valueGraph");
         const savedValueScores = localStorage.getItem("valueScores");
