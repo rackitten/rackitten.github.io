@@ -201,522 +201,475 @@
       </div>
       <script>
         const values = [
-        {
-          value: "Accountability",
-          definition: "Taking responsibility for one's actions and decisions.",
-        },
-        {
-          value: "Achievement",
-          definition: "The act of completing a goal or task successfully.",
-        },
-        {
-          value: "Adaptability",
-          definition: "The ability to adjust to new conditions or situations.",
-        },
-        {
-          value: "Adventure",
-          definition: "An exciting or risky experience.",
-        },
-        {
-          value: "Altruism",
-          definition: "The selfless concern for the welfare of others.",
-        },
-        {
-          value: "Ambition",
-          definition: "A strong desire to achieve success or power.",
-        },
-        {
-          value: "Authenticity",
-          definition: "Being genuine and true to oneself.",
-        },
-        {
-          value: "Balance",
-          definition:
-            "A state of equilibrium or equal distribution of weight, emphasis, or importance.",
-        },
-        {
-          value: "Beauty",
-          definition: "A pleasing or attractive appearance or quality.",
-        },
-        {
-          value: "Being the best",
-          definition: "Striving to achieve excellence in all aspects of life.",
-        },
-        {
-          value: "Belonging",
-          definition:
-            "The feeling of acceptance and connection to a group or community.",
-        },
-        {
-          value: "Career",
-          definition: "An occupation or profession pursued for a lifetime.",
-        },
-        {
-          value: "Caring",
-          definition: "Showing concern and compassion for others.",
-        },
-        {
-          value: "Collaboration",
-          definition: "The act of working jointly on a project or task.",
-        },
-        {
-          value: "Commitment",
-          definition: "A dedication to a cause, activity, or person.",
-        },
-        {
-          value: "Community",
-          definition:
-            "A group of people living in the same area or sharing a common characteristic.",
-        },
-        {
-          value: "Compassion",
-          definition: "Sympathetic concern for the sufferings of others.",
-        },
-        {
-          value: "Competence",
-          definition: "The ability to perform a task successfully.",
-        },
-        {
-          value: "Confidence",
-          definition:
-            "A feeling of self-assurance and belief in one's abilities.",
-        },
-        {
-          value: "Connection",
-          definition: "A link or relationship between people or things.",
-        },
-        {
-          value: "Contentment",
-          definition: "A state of peaceful happiness and satisfaction.",
-        },
-        {
-          value: "Contribution",
-          definition: "The act of giving something to a cause or purpose.",
-        },
-        {
-          value: "Cooperation",
-          definition: "The act of working together for a common purpose.",
-        },
-        {
-          value: "Courage",
-          definition: "The ability to do something that frightens one.",
-        },
-        {
-          value: "Creativity",
-          definition: "The ability to use imagination to create something new.",
-        },
-        {
-          value: "Curiosity",
-          definition: "A strong desire to know or learn something.",
-        },
-        {
-          value: "Dignity",
-          definition: "The quality of being deserving of respect.",
-        },
-        {
-          value: "Diversity",
-          definition:
-            "The variety of human experiences, backgrounds, and perspectives.",
-        },
-        {
-          value: "Environment",
-          definition:
-            "The surroundings or conditions in which something exists.",
-        },
-        {
-          value: "Efficiency",
-          definition:
-            "The ability to achieve a desired outcome with minimal effort or waste.",
-        },
-        {
-          value: "Equality",
-          definition:
-            "The state of being equal in status, rights, or opportunities.",
-        },
-        {
-          value: "Ethics",
-          definition: "Moral principles that govern behavior.",
-        },
-        {
-          value: "Excellence",
-          definition: "The quality of being outstanding or extremely good.",
-        },
-        {
-          value: "Fairness",
-          definition: "Treating everyone equally and justly.",
-        },
-        {
-          value: "Faith",
-          definition:
-            "A strong belief in something for which there is no proof.",
-        },
-        {
-          value: "Family",
-          definition:
-            "A group of people who are related to each other, either by blood or marriage.",
-        },
-        {
-          value: "Financial stability",
-          definition:
-            "Having enough income to meet your needs and live comfortably.",
-        },
-        {
-          value: "Forgiveness",
-          definition: "The act of pardoning someone for a wrong.",
-        },
-        {
-          value: "Freedom",
-          definition:
-            "The power or right to act, speak, or think as one wants without hindrance or restraint.",
-        },
-        {
-          value: "Friendship",
-          definition:
-            "A close relationship between two people who share common interests and enjoy spending time together.",
-        },
-        {
-          value: "Fun",
-          definition: "Enjoyment, amusement, or lighthearted pleasure.",
-        },
-        {
-          value: "Future generations",
-          definition:
-            "The generations of people who will be born in the future.",
-        },
-        {
-          value: "Generosity",
-          definition: "The quality of being kind and giving.",
-        },
-        {
-          value: "Giving back",
-          definition: "Donating time, resources, or skills to help others.",
-        },
-        {
-          value: "Grace",
-          definition: "Elegant or courteous behavior.",
-        },
-        {
-          value: "Gratitude",
-          definition: "The feeling of thankfulness and appreciation.",
-        },
-        {
-          value: "Growth",
-          definition:
-            "The process of increasing in size, quantity, or development.",
-        },
-        {
-          value: "Harmony",
-          definition: "The state of agreement or concord.",
-        },
-        {
-          value: "Health",
-          definition: "The state of being free from illness or disease.",
-        },
-        {
-          value: "Home",
-          definition: "A place where one lives permanently or habitually.",
-        },
-        {
-          value: "Honesty",
-          definition: "The quality of being truthful and sincere.",
-        },
-        {
-          value: "Hope",
-          definition:
-            "A feeling of expectation and desire for a positive outcome.",
-        },
-        {
-          value: "Humility",
-          definition:
-            "The quality of having a modest view of one's importance.",
-        },
-        {
-          value: "Humor",
-          definition: "The quality of being amusing or comic.",
-        },
-        {
-          value: "Inclusion",
-          definition:
-            "The act of including or accepting people as part of a group.",
-        },
-        {
-          value: "Independence",
-          definition: "The state of being self-sufficient.",
-        },
-        {
-          value: "Initiative",
-          definition: "The ability to take the initiative in doing something.",
-        },
-        {
-          value: "Integrity",
-          definition:
-            "The quality of being honest and having strong moral principles.",
-        },
-        {
-          value: "Intuition",
-          definition:
-            "A feeling or sense that something is true without any supporting evidence or logical reasoning.",
-        },
-        {
-          value: "Job security",
-          definition:
-            "The feeling of certainty that one will not lose their job.",
-        },
-        {
-          value: "Joy",
-          definition: "A feeling of great pleasure and happiness.",
-        },
-        {
-          value: "Justice",
-          definition: "The fair and equal treatment of all people.",
-        },
-        {
-          value: "Kindness",
-          definition: "The quality of being generous, caring, and considerate.",
-        },
-        {
-          value: "Knowledge",
-          definition:
-            "Facts, information, and skills acquired through experience or learning.",
-        },
-        {
-          value: "Leadership",
-          definition:
-            "The action of leading a group of people or an organization.",
-        },
-        {
-          value: "Learning",
-          definition:
-            "The act of acquiring knowledge or skills through study, experience, or instruction.",
-        },
-        {
-          value: "Legacy",
-          definition:
-            "Something left behind by a person or group that is remembered.",
-        },
-        {
-          value: "Leisure",
-          definition: "Free time for relaxation and enjoyment.",
-        },
-        {
-          value: "Love",
-          definition: "An intense feeling of deep affection and care.",
-        },
-        {
-          value: "Loyalty",
-          definition: "Faithfulness to a person, group, or cause.",
-        },
-        {
-          value: "Making a difference",
-          definition: "Having a positive impact on the world.",
-        },
-        {
-          value: "Nature",
-          definition:
-            "The physical world around us, including plants, animals, landscapes, and the processes that sustain them.",
-        },
-        {
-          value: "Openness",
-          definition:
-            "The willingness to listen to new ideas and be receptive to different perspectives.",
-        },
-        {
-          value: "Optimism",
-          definition:
-            "The feeling or belief that good things will happen in the future.",
-        },
-        {
-          value: "Order",
-          definition: "A state of neatness, tidiness, and organization.",
-        },
-        {
-          value: "Parenting",
-          definition: "The act of raising a child.",
-        },
-        {
-          value: "Patience",
-          definition: "The ability to wait calmly and without complaining.",
-        },
-        {
-          value: "Patriotism",
-          definition: "Love and devotion to one's country.",
-        },
-        {
-          value: "Peace",
-          definition: "Freedom from war, violence, or conflict.",
-        },
-        {
-          value: "Perseverance",
-          definition:
-            "Continued effort to do or achieve something despite difficulties.",
-        },
-        {
-          value: "Personal fulfillment",
-          definition:
-            "A sense of satisfaction and accomplishment in one's life.",
-        },
-        {
-          value: "Power",
-          definition:
-            "The ability to control or influence people or situations.",
-        },
-        {
-          value: "Pride",
-          definition:
-            "A feeling of deep satisfaction or pleasure from one's achievements.",
-        },
-        {
-          value: "Recognition",
-          definition:
-            "The act of acknowledging or noticing someone or something.",
-        },
-        {
-          value: "Reliability",
-          definition:
-            "The ability to be trusted to do something or to be of good quality.",
-        },
-        {
-          value: "Resourcefulness",
-          definition:
-            "The ability to find clever or inventive ways to overcome difficulties.",
-        },
-        {
-          value: "Respect",
-          definition:
-            "A feeling of deep admiration for someone or something that is considered to be good, important, or superior.",
-        },
-        {
-          value: "Responsibility",
-          definition: "The state of being accountable for one's own actions.",
-        },
-        {
-          value: "Risk-taking",
-          definition: "The willingness to take risks or chances.",
-        },
-        {
-          value: "Safety",
-          definition: "The state of being protected from harm or danger.",
-        },
-        {
-          value: "Security",
-          definition: "The state of being safe and free from danger or threat.",
-        },
-        {
-          value: "Self-discipline",
-          definition:
-            "The ability to control one's own behavior, especially in order to achieve a goal.",
-        },
-        {
-          value: "Self-expression",
-          definition:
-            "The act of communicating one's thoughts, feelings, and ideas.",
-        },
-        {
-          value: "Self-respect",
-          definition: "A feeling of respect and value for oneself.",
-        },
-        {
-          value: "Serenity",
-          definition: "A state of calmness and peacefulness.",
-        },
-        {
-          value: "Service",
-          definition: "The act of helping or doing work for someone else.",
-        },
-        {
-          value: "Simplicity",
-          definition: "The quality of being easy to understand or do.",
-        },
-        {
-          value: "Spirituality",
-          definition:
-            "The quality of being concerned with the human spirit or soul as opposed to material or physical things.",
-        },
-        {
-          value: "Sportsmanship",
-          definition: "Fair play and good manners in a sport.",
-        },
-        {
-          value: "Stewardship",
-          definition: "The responsible caretaking of something.",
-        },
-        {
-          value: "Success",
-          definition: "The accomplishment of an aim or purpose.",
-        },
-        {
-          value: "Teamwork",
-          definition:
-            "The act of working together as a team to achieve a common goal.",
-        },
-        {
-          value: "Thrift",
-          definition: "Careful use of money or resources and avoiding waste.",
-        },
-        {
-          value: "Time",
-          definition:
-            "The indefinite continued progress of existence and events in the past, present, and future.",
-        },
-        {
-          value: "Tradition",
-          definition:
-            "A belief or custom that has been passed down from generation to generation.",
-        },
-        {
-          value: "Travel",
-          definition: "The act of going from one place to another.",
-        },
-        {
-          value: "Trust",
-          definition:
-            "A firm belief in the reliability, strength, or truth of someone or something.",
-        },
-        {
-          value: "Truth",
-          definition: "That which is true or in accordance with fact.",
-        },
-        {
-          value: "Understanding",
-          definition: "The ability to comprehend the meaning of something.",
-        },
-        {
-          value: "Uniqueness",
-          definition: "The quality of being different from anything else.",
-        },
-        {
-          value: "Usefulness",
-          definition:
-            "The quality of being useful or having a practical purpose.",
-        },
-        {
-          value: "Vision",
-          definition:
-            "The ability to think about or plan the future with imagination or wisdom.",
-        },
-        {
-          value: "Vulnerability",
-          definition: "The state of being open to attack or damage.",
-        },
-        {
-          value: "Wealth",
-          definition: "An abundance of possessions and money.",
-        },
-        {
-          value: "Well-being",
-          definition: "The state of being in good health and spirits.",
-        },
-        {
-          value: "Wholeheartedness",
-          definition:
-            "The quality of being complete, sincere, and enthusiastic.",
-        },
-        {
-          value: "Wisdom",
-          definition:
-            "The ability to use knowledge and experience to make good decisions.",
-        },
-        ];
+  {
+    value: "Accountability",
+    definition: "Owning the impact of my actions and choices, both the successes and the mistakes." 
+  },
+  {
+    value: "Achievement",
+    definition: "Striving for meaningful goals and experiencing the satisfaction of accomplishment." 
+  },
+  {
+    value: "Adaptability",
+    definition: "Embracing change and finding creative solutions to overcome challenges." 
+  },
+  {
+    value: "Adventure",
+    definition: "Seeking out new and exciting experiences that push my boundaries." 
+  },
+  {
+    value: "Altruism",
+    definition: "Prioritizing the well-being of others and acting with compassion." 
+  },
+  {
+    value: "Ambition",
+    definition: "Striving for success and aiming to make a positive impact." 
+  },
+  {
+    value: "Authenticity",
+    definition: "Living in alignment with my true self and embracing my unique qualities." 
+  },
+  {
+    value: "Balance",
+    definition: "Striving for harmony and well-being in all aspects of my life." 
+  },
+  {
+    value: "Beauty",
+    definition: "Seeking out and appreciating beauty in the world around me." 
+  },
+  {
+    value: "Being the best",
+    definition: "Continuously pushing myself to grow and excel in all areas of my life." 
+  },
+  {
+    value: "Belonging",
+    definition: "Fostering strong connections and finding my place within supportive communities." 
+  },
+  {
+    value: "Career",
+    definition: "Finding fulfillment through work that aligns with my values and passions." 
+  },
+  {
+    value: "Caring",
+    definition: "Showing empathy and extending kindness to others." 
+  },
+  {
+    value: "Collaboration",
+    definition: "Working together with others to achieve shared goals."  
+  },
+  {
+    value: "Commitment",
+    definition: "Dedicating myself fully to my goals, relationships, and responsibilities."
+  },
+  {
+    value: "Community",
+    definition: "Contributing to and nurturing the communities I belong to." 
+  },
+  {
+    value: "Compassion",
+    definition: "Actively seeking to understand and alleviate the suffering of others." 
+  },
+  {
+    value: "Competence",
+    definition: "Continuously developing my skills and knowledge to perform tasks effectively." 
+  },
+  {
+    value: "Confidence",
+    definition: "Believing in my abilities and having the courage to pursue my goals."
+  },
+  {
+    value: "Connection",
+    definition: "Building meaningful relationships based on open communication and trust." 
+  },
+  {
+    value: "Contentment",
+    definition: "Cultivating gratitude and finding peace in the present moment." 
+  },
+  {
+    value: "Contribution",
+    definition: "Giving my time, energy, and resources to make a positive impact on the world." 
+  },
+  {
+    value: "Cooperation",
+    definition: "Working with others respectfully to achieve common goals." 
+  },
+  {
+    value: "Courage",
+    definition: "Facing my fears and acting with conviction, even in difficult situations." 
+  },
+  {
+    value: "Creativity",
+    definition: "Expressing myself through unique ideas and exploring new possibilities."
+  },
+  {
+    value: "Curiosity",
+    definition: "Maintaining a lifelong love of learning and exploration." 
+  },
+  {
+    value: "Dignity",
+    definition: "Treating myself and all others with respect and inherent worth."  
+  },
+  {
+    value: "Diversity",
+    definition: "Embracing and celebrating the unique perspectives and experiences of others." 
+  },
+  { 
+    value: "Environment",
+    definition: "Respecting and protecting the natural world for future generations." 
+  },
+  {
+    value: "Efficiency",
+    definition: "Using my time and resources wisely to maximize results." 
+  },
+  {
+    value: "Equality",
+    definition: "Advocating for justice and equal opportunities for all people." 
+  },
+  {
+    value: "Ethics",
+    definition: "Upholding strong moral principles and acting with integrity."  
+  },
+  {
+    value: "Excellence",
+    definition: "Striving for my best in all that I do." 
+  },
+  {
+    value: "Fairness",
+    definition: "Treating everyone justly and equitably." 
+  },
+  {
+    value: "Faith",
+    definition: "Finding strength and guidance in my beliefs." 
+  },
+  {
+    value: "Family",
+    definition: "Prioritizing familial relationships and the well-being of family members." 
+  },
+  {
+    value: "Financial stability",
+    definition: "Managing my resources responsibly to ensure a secure future. "
+  },
+  {
+    value: "Forgiveness",
+    definition: "Letting go of resentment and practicing compassion towards myself and others." 
+  },
+  {
+    value: "Freedom",
+    definition: "Cherishing my independence and the ability to make my own choices."  
+  },
+  {
+    value: "Friendship",
+    definition: "Cultivating supportive and enriching relationships based on loyalty and shared values."
+  },
+  {
+    value: "Fun",
+    definition: "Embracing playfulness, laughter, and experiences that bring joy."
+  },
+  {
+    value: "Future generations",
+    definition: "Making responsible choices that consider the long-term well-being of the planet and its inhabitants." 
+  },
+  {
+    value: "Generosity",
+    definition: "Sharing my time, resources, and talents freely with others." 
+  },
+  {
+    value: "Giving back",
+    definition: "Expressing gratitude by contributing to my community and causes I believe in."
+  },
+  {
+    value: "Grace",
+    definition: "Treating myself and others with kindness, understanding, and forgiveness."
+  },
+  {
+    value: "Gratitude",
+    definition: "Actively appreciating the good in my life and cultivating a thankful heart." 
+  },
+  {
+    value: "Growth",
+    definition: "Continuously learning, evolving, and striving to become a better version of myself." 
+  },
+  {
+    value: "Harmony",
+    definition: "Promoting peace and understanding within myself and my relationships." 
+  },
+  {
+    value: "Health",
+    definition: "Prioritizing my physical and mental well-being." 
+  },
+  {
+    value: "Home",
+    definition: "Creating a nurturing and comfortable space that reflects me."
+  },
+  {
+    value: "Honesty",
+    definition: "Living with integrity and being truthful with myself and others." 
+  },
+  {
+    value: "Hope",
+    definition: "Maintaining optimism and believing in a positive future." 
+  },
+  {
+    value: "Humility",
+    definition: "Recognizing my limitations and being open to learning from others."  
+  },
+  {
+    value: "Humor",
+    definition: "Finding joy and lightness in life, even during challenging times." 
+  },
+  {
+    value: "Inclusion",
+    definition: "Creating welcoming environments where everyone feels valued and respected." 
+  },
+  {
+    value: "Independence",
+    definition: "Embracing self-reliance and the ability to make and carry out my own decisions." 
+  },
+  {
+    value: "Initiative",
+    definition: "Being proactive and taking action to make things happen." 
+  },
+  {
+    value: "Integrity",
+    definition: "Upholding strong moral principles and doing the right thing, even when difficult."  
+  },
+  {
+    value: "Intuition",
+    definition: "Trusting my inner voice and using it as a guide for decision-making." 
+  },
+  {
+    value: "Job security",
+    definition: "Seeking stability and peace of mind through meaningful employment." 
+  },
+  {
+    value: "Joy",
+    definition: "Cultivating a sense of happiness and finding delight in everyday moments." 
+  },
+  {
+    value: "Justice",
+    definition: "Standing up for fairness and advocating for the rights of all." 
+  },
+  {
+    value: "Kindness",
+    definition: "Treating others with compassion, empathy, and respect."  
+  },
+  {
+    value: "Knowledge",
+    definition: "Pursuing lifelong learning and expanding my understanding of the world."
+    },
+    {
+    value: "Leadership",
+    definition: "Inspiring and guiding others towards a shared vision." 
+  },
+  {
+    value: "Learning",
+    definition: "Embracing curiosity and actively seeking new knowledge and experiences." 
+  },
+  {
+    value: "Legacy",
+    definition: "Striving to leave a positive and lasting impact on the world."
+  },
+  {
+    value: "Leisure",
+    definition: "Embracing rest, relaxation, and activities that bring me joy."
+  },
+  {
+    value: "Love",
+    definition: "Cultivating deep affection and care for myself and others."
+  },
+  {
+    value: "Loyalty",
+    definition: "Staying committed to the people and causes I believe in."
+  },
+  {
+    value: "Making a difference",
+    definition: "Using my actions and voice to create a positive impact on the world." 
+  },
+  {
+    value: "Nature",
+    definition: "Appreciating the beauty of the natural world and protecting it for future generations." 
+  },
+  {
+    value: "Openness",
+    definition: "Being receptive to new ideas, perspectives, and experiences."  
+  },
+  {
+    value: "Optimism",
+    definition: "Maintaining a positive outlook and believing in the possibility of a better future. "
+  },
+  {
+    value: "Order",
+    definition: "Creating systems and structures to bring organization and clarity to my life." 
+  },
+  {
+    value: "Parenting",
+    definition: "Nurturing and guiding my children with love and wisdom."
+  },
+  {
+    value: "Patience",
+    definition: "Remaining calm under pressure and persevering through challenges."  
+  },
+  {
+    value: "Patriotism",
+    definition: "Showing love and respect for my country while advocating for its betterment." 
+  },
+  {
+    value: "Peace",
+    definition: "Promoting harmony, understanding, and resolving conflicts nonviolently." 
+  },
+  {
+    value: "Perseverance",
+    definition: "Overcoming obstacles and never giving up on my goals." 
+  },
+  {
+    value: "Personal fulfillment",
+    definition: "Finding meaning and satisfaction in my life's pursuits."
+  },
+  {
+    value: "Power",
+    definition: "Harnessing my influence to create positive change for myself and others." 
+  },
+  {
+    value: "Pride",
+    definition: "Celebrating my accomplishments and recognizing my own worth."
+  },
+  {
+    value: "Recognition",
+    definition: "Appreciating when my efforts and achievements are acknowledged." 
+  },
+  {
+    value: "Reliability",
+    definition: "Being dependable and following through on my commitments." 
+  },
+  {
+    value: "Resourcefulness",
+    definition: "Finding creative solutions and making the most of what I have."  
+  },
+  {
+    value: "Respect",
+    definition: "Treating myself and others with dignity and consideration." 
+  },
+  {
+    value: "Responsibility",
+    definition: "Taking ownership of my actions, choices and their consequences." 
+  },
+  {
+    value: "Risk-taking",
+    definition: "Stepping outside my comfort zone and embracing the potential for growth." 
+  },
+  {
+    value: "Safety",
+    definition: "Prioritizing my physical and emotional well-being."  
+  },
+  {
+    value: "Security",
+    definition: "Seeking stability and peace of mind in all aspects of my life."  
+  },
+  {
+    value: "Self-discipline",
+    definition: "Exercising self-control to achieve my goals and live in accordance with my values." 
+  },
+  {
+    value: "Self-expression",
+    definition: "Communicating my authentic self through my creativity, opinions, and choices."  
+  },
+  {
+    value: "Self-respect",
+    definition: "Valuing myself, my time, and my boundaries."  
+  },
+  {
+    value: "Serenity",
+    definition: "Cultivating inner peace and tranquility." 
+  },
+  {
+    value: "Service",
+    definition: "Helping others and contributing to my community."  
+  },
+  {
+    value: "Simplicity",
+    definition: "Finding joy in the essentials and minimizing distractions."  
+  },
+  {
+    value: "Spirituality",
+    definition: "Connecting with a higher power or sense of purpose beyond myself."
+  },
+  {
+    value: "Sportsmanship",
+    definition: "Exhibiting fairness, respect, and graciousness in competition."  
+  },
+  {
+    value: "Stewardship",
+    definition: "Responsibly managing and caring for the resources entrusted to me." 
+  },
+  {
+    value: "Success",
+    definition: "Defining success on my own terms and achieving what matters most." 
+  },
+  {
+    value: "Teamwork",
+    definition: "Collaborating effectively with others to achieve shared goals."   
+  },
+  {
+    value: "Thrift",
+    definition: "Managing my resources wisely and avoiding wastefulness." 
+  },
+  {
+    value: "Time",
+    definition: "Valuing my time and using it intentionally." 
+  },
+  {
+    value: "Tradition",
+    definition: "Honoring and preserving meaningful customs and rituals." 
+  },
+  {
+    value: "Travel",
+    definition: "Expanding my horizons through exploration and experiencing different cultures."  
+  },
+  {
+    value: "Trust",
+    definition: "Believing in the reliability and good intentions of others." 
+  },
+  {
+    value: "Truth",
+    definition: "Seeking truth and living in accordance with my understanding of it." 
+  },
+  {
+    value: "Understanding",
+    definition: "Making an effort to empathize with others and see things from their perspective."     
+  },
+  {
+    value: "Uniqueness",
+    definition: "Embracing my individuality and what makes me special. "
+  },
+  {
+    value: "Usefulness",
+    definition: "Striving to be helpful and make a practical contribution."
+  },
+  {
+    value: "Vision",
+    definition: "Imagining a better future and working towards making it a reality."  
+  },
+  {
+    value: "Vulnerability",
+    definition: "Being open and authentic, even when it feels risky." 
+  },
+  {
+    value: "Wealth",
+    definition: "Seeking financial well-being while recognizing that true wealth encompasses more than material possessions."  
+  },
+  {
+    value: "Well-being",
+    definition: "Prioritizing my overall health and happiness, physically, mentally, and emotionally." 
+  },
+  {
+    value: "Wholeheartedness",
+    definition: "Living with sincerity, enthusiasm, and full commitment." 
+  },
+  {
+    value: "Wisdom",
+    definition: "Actively seeking knowledge, experience, and sound judgment."  
+  } 
+];
 
         let valueGraph = {};
         let valueScores = {};
