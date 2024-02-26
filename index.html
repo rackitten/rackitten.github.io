@@ -1,408 +1,478 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Value Comparator</title>
-    <style>
-      body,
-      button,
-      div,
-      h1 {
-        font-family: "Courier New", monospace;
-        color: #0f0;
-        background-color: #000;
-      }
-
-      #app {
-        text-align: center;
-        padding: 20px;
-      }
-
-      .tooltip {
-        position: relative;
-        display: inline-block;
-      }
-
-      .tooltip .tooltiptext {
-        visibility: hidden;
-        width: 180px;
-        background-color: #555;
-        color: #fff;
-        text-align: center;
-        border-radius: 6px;
-        padding: 8px;
-        position: absolute;
-        z-index: 1;
-        bottom: -5px;
-        left: 50%;
-        transform: translateX(-50%) translateY(100%);
-        font-size: 14px;
-        box-shadow: 0px 0px 10px 0px rgba(0, 255, 0, 0.5);
-        opacity: 0;
-        transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
-      }
-
-      .tooltip:hover .tooltiptext {
-        visibility: visible;
-        opacity: 1;
-        transform: translateX(-50%) translateY(110%);
-      }
-
-      .option-btn {
-        margin: 10px;
-        background-color: #222;
-        color: #0f0;
-        border: 1px solid #0f0;
-        padding: 20px 40px;
-        cursor: pointer;
-        font-size: 24px;
-        display: inline-block;
-        text-align: center;
-      }
-
-      .option-btn:hover {
-        background-color: #333;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Value Comparator</title>
+  <style>
+    :root {
+      --background-color: #000;
+      --primary-color: #0f0;
+      --button-hover-color: #333;
+      --tooltip-color: #555;
+      --font-family: "Courier New", monospace;
+      --reset-button-color: #222;
+      --reset-button-border-color: #0a0;
+    }
+  
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+  
+    body {
+      font-family: var(--font-family);
+      color: var(--primary-color);
+      background-color: var(--background-color);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    #app {
+      max-width: 600px;
+      margin: auto;
+      text-align: center;
+    }
+  
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+  
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 180px;
+      background-color: var(--tooltip-color);
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: 150%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      box-shadow: 0 0 10px 0 rgba(0, 255, 0, 0.5);
+      opacity: 0;
+      transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+    }
+  
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(-50%) translateY(-5px);
+    }
+  
+    .option-btn,
+    .info-btn {
+      background-color: #222;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      display: inline-block;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+  
+    .option-btn:hover,
+    .info-btn:hover {
+      background-color: var(--button-hover-color);
+    }
+  
+    #question h1 {
+      margin-bottom: 30px;
+      font-size: 24px;
+    }
+  
+    #options {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+    }
+  
+    #options > div {
+      flex: 1;
+      text-align: center;
+    }
+  
+    #options > div:not(:nth-child(2)) {
+      min-width: 100px;
+    }
+  
+    #ranking {
+      margin-top: 20px;
+    }
+  
+    #controls {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+  
+    #resetButton {
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: var(--reset-button-color);
+      color: var(--primary-color);
+      border: 1px solid var(--reset-button-border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 2px rgba(15, 255, 0, 0.2);
+    }
+  
+    #resetButton:hover {
+      background-color: var(--button-hover-color);
+      box-shadow: 0 2px 4px rgba(15, 255, 0, 0.4);
+    }
+  
+    @media (max-width: 600px) {
+      #question h1,
+      .option-btn,
       .info-btn {
-        display: block; /* Or inline-block, depending on your layout */
-        margin: 5px auto; /* Centers the button if the parent is .tooltip */
-        padding: 5px;
-        font-size: 18px;
-        background-color: #333; /* Match your design */
-        color: #0f0;
-        border: 1px solid #0f0;
-        cursor: pointer;
+        font-size: calc(4vw);
       }
-      #question h1 {
-        margin-bottom: 30px;
-        font-size: 32px;
+  
+      .option-btn,
+      .info-btn {
+        padding: calc(2vw);
       }
-
+  
       #options {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 24px;
+        flex-direction: column;
       }
+  
+      #options > div:not(:nth-child(2)) {
+        min-width: 0;
+        width: 100%;
+        margin: 10px 0;
+      }
+  
+      .tooltip .tooltiptext {
+        font-size: calc(3.5vw);
+      }
+  
+      #controls {
+        flex-direction: column;
+        align-items: center  
+    }
 
-      #ranking {
-        margin-top: 20px;
-      }
-
-      #questionCounter {
-        position: absolute;
-        top: 0;
-        right: 0;
-        padding: 20px;
-        color: #0f0;
-        font-family: "Courier New", monospace;
-      }
-      #resetButton {
-        position: absolute;
-        top: 20;
-        right: 0;
-        padding: 20px;
-        color: #0f0;
-        font-family: "Courier New", monospace;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="app">
+</style>
+</head>
+<body>
+  <div id="app">
+    <div id="controls">
       <div id="questionCounter">Questions: 0</div>
-      <button id="resetButton" style="margin-top: 20px">Reset</button>
-
-      <div id="question">
-        <h1>Which is more important to you?</h1>
-      </div>
-      <div id="options">
-        <div>
-          <button id="option1" class="option-btn"></button>
-          <div class="tooltip">
-            <button class="info-btn" onclick="showDefinition('tooltip1')">
-              ?
-            </button>
-            <span class="tooltiptext" id="tooltip1"></span>
-          </div>
-        </div>
-        <div>or</div>
-        <div>
-          <button id="option2" class="option-btn"></button>
-          <div class="tooltip">
-            <button class="info-btn" onclick="showDefinition('tooltip2')">
-              ?
-            </button>
-            <span class="tooltiptext" id="tooltip2"></span>
-          </div>
-        </div>
-      </div>
-      <div id="ranking"></div>
+      <button id="resetButton">Reset</button>
     </div>
-    <script>
-      const values = [
-        {
-          value: "Accountability",
-          definition: "Taking responsibility for one's actions and decisions.",
-        },
-        {
-          value: "Achievement",
-          definition: "The act of completing a goal or task successfully.",
-        },
-        {
-          value: "Adaptability",
-          definition: "The ability to adjust to new conditions or situations.",
-        },
-        { value: "Adventure", definition: "An exciting or risky experience." },
-        {
-          value: "Altruism",
-          definition: "The selfless concern for the welfare of others.",
-        },
-        {
-          value: "Ambition",
-          definition: "A strong desire to achieve success or power.",
-        },
-        {
-          value: "Authenticity",
-          definition: "Being genuine and true to oneself.",
-        },
-        {
-          value: "Balance",
-          definition:
-            "A state of equilibrium or equal distribution of weight, emphasis, or importance.",
-        },
-        {
-          value: "Beauty",
-          definition: "A pleasing or attractive appearance or quality.",
-        },
-      ];
+        <div id="question">
+            <h1>Which is more important to you?</h1>
+          </div>
+          <div id="options">
+            <div>
+              <button id="option1" class="option-btn"></button>
+              <div class="tooltip">
+                <button class="info-btn" onclick="showDefinition('tooltip1')">?</button>
+                <span class="tooltiptext" id="tooltip1"></span>
+              </div>
+            </div>
+            <div>or</div>
+            <div>
+              <button id="option2" class="option-btn"></button>
+              <div class="tooltip">
+                <button class="info-btn" onclick="showDefinition('tooltip2')">?</button>
+                <span class="tooltiptext" id="tooltip2"></span>
+              </div>
+            </div>
+          </div>
+          <div id="ranking"></div>
+      </div>
+      <script>
+        const values = [
+          {
+            value: "Accountability",
+            definition:
+              "Taking responsibility for one's actions and decisions.",
+          },
+          {
+            value: "Achievement",
+            definition: "The act of completing a goal or task successfully.",
+          },
+          {
+            value: "Adaptability",
+            definition:
+              "The ability to adjust to new conditions or situations.",
+          },
+          {
+            value: "Adventure",
+            definition: "An exciting or risky experience.",
+          },
+          {
+            value: "Altruism",
+            definition: "The selfless concern for the welfare of others.",
+          },
+          {
+            value: "Ambition",
+            definition: "A strong desire to achieve success or power.",
+          },
+          {
+            value: "Authenticity",
+            definition: "Being genuine and true to oneself.",
+          },
+          {
+            value: "Balance",
+            definition:
+              "A state of equilibrium or equal distribution of weight, emphasis, or importance.",
+          },
+          {
+            value: "Beauty",
+            definition: "A pleasing or attractive appearance or quality.",
+          },
+        ];
 
-      let valueGraph = {};
-      let valueScores = {};
-      let comparedPairs = new Set(); // Tracks compared pairs to avoid repeats
-      let totalQuestions = 0; // Total number of questions asked
+        let valueGraph = {};
+        let valueScores = {};
+        let comparedPairs = new Set(); // Tracks compared pairs to avoid repeats
+        let totalQuestions = 0; // Total number of questions asked
 
-      function initGraphAndScores() {
-        values.forEach((value) => {
-          valueGraph[value.value] = {
-            wins: [],
-            losses: [],
-            appearances: 0, // Track how many times each value has appeared in a question
-            compared: new Set(), // Track comparisons for each value
-          };
-          valueScores[value.value] = 1 / values.length; // Initialize scores equally
-        });
-      }
-
-      function updateGraphAndScores(winner, loser) {
-        valueGraph[winner].wins.push(loser);
-        valueGraph[loser].losses.push(winner);
-        valueGraph[winner].compared.add(loser);
-        valueGraph[loser].compared.add(winner);
-        comparedPairs.add(winner + ":" + loser); // Track this comparison
-        comparedPairs.add(loser + ":" + winner); // Also track the reverse comparison to avoid repetition
-
-        const numPlayers = Object.keys(valueGraph).length;
-        const dampingFactor = 0.5;
-        let scores = Object.assign({}, valueScores);
-
-        for (let i = 0; i < 100; i++) {
-          let newScores = {};
-          let totalScore = 0;
-
-          for (let player in valueGraph) {
-            newScores[player] = (1 - dampingFactor) / numPlayers;
-            let winScoreSum = valueGraph[player].wins
-              .map((winner) => scores[winner])
-              .reduce((acc, current) => acc + current, 0);
-            newScores[player] += dampingFactor * winScoreSum;
-            totalScore += newScores[player];
-          }
-
-          for (let player in newScores) {
-            newScores[player] /= totalScore;
-          }
-
-          scores = Object.assign({}, newScores);
+        function initGraphAndScores() {
+          values.forEach((value) => {
+            valueGraph[value.value] = {
+              wins: [],
+              losses: [],
+              appearances: 0, // Track how many times each value has appeared in a question
+              compared: new Set(), // Track comparisons for each value
+            };
+            valueScores[value.value] = 1 / values.length; // Initialize scores equally
+          });
         }
 
-        valueScores = scores;
-        // Save state to local storage
-        localStorage.setItem("valueGraph", JSON.stringify(valueGraph));
-        localStorage.setItem("valueScores", JSON.stringify(valueScores));
-        localStorage.setItem("totalQuestions", totalQuestions.toString());
-        localStorage.setItem("comparedPairs", JSON.stringify(comparedPairs));
-      }
-      function showDefinition(tooltipId) {
-        const tooltipText = document.getElementById(tooltipId).textContent;
-      }
-      function loadState() {
-        const savedValueGraph = localStorage.getItem("valueGraph");
-        const savedValueScores = localStorage.getItem("valueScores");
-        const savedTotalQuestions = localStorage.getItem("totalQuestions");
-        const savedComparedPairs = localStorage.getItem("comparedPairs");
+        function updateGraphAndScores(winner, loser) {
+          valueGraph[winner].wins.push(loser);
+          valueGraph[loser].losses.push(winner);
+          valueGraph[winner].compared.add(loser);
+          valueGraph[loser].compared.add(winner);
+          comparedPairs.add(winner + ":" + loser); // Track this comparison
+          comparedPairs.add(loser + ":" + winner); // Also track the reverse comparison to avoid repetition
 
-        if (
-          savedValueGraph &&
-          savedValueScores &&
-          savedTotalQuestions &&
-          savedComparedPairs
-        ) {
-          const tempValueGraph = JSON.parse(savedValueGraph);
-          comparedPairs = new Set(
-            Object.values(JSON.parse(savedComparedPairs)) || []
-          );
-          // Convert arrays back into Set objects
-          for (let key in tempValueGraph) {
-            if (tempValueGraph.hasOwnProperty(key)) {
-              tempValueGraph[key].compared = new Set(
-                Object.values(tempValueGraph[key].compared) || []
+          const numPlayers = Object.keys(valueGraph).length;
+          const dampingFactor = 0.5;
+          let scores = Object.assign({}, valueScores);
+
+          for (let i = 0; i < 100; i++) {
+            let newScores = {};
+            let totalScore = 0;
+
+            for (let player in valueGraph) {
+              newScores[player] = (1 - dampingFactor) / numPlayers;
+              let winScoreSum = valueGraph[player].wins
+                .map((winner) => scores[winner])
+                .reduce((acc, current) => acc + current, 0);
+              newScores[player] += dampingFactor * winScoreSum;
+              totalScore += newScores[player];
+            }
+
+            for (let player in newScores) {
+              newScores[player] /= totalScore;
+            }
+
+            scores = Object.assign({}, newScores);
+          }
+
+          valueScores = scores;
+          // Save state to local storage
+          localStorage.setItem("valueGraph", JSON.stringify(valueGraph));
+          localStorage.setItem("valueScores", JSON.stringify(valueScores));
+          localStorage.setItem("totalQuestions", totalQuestions.toString());
+          localStorage.setItem("comparedPairs", JSON.stringify(comparedPairs));
+        }
+        function showDefinition(tooltipId) {
+          const tooltipText = document.getElementById(tooltipId).textContent;
+        }
+        function loadState() {
+          const savedValueGraph = localStorage.getItem("valueGraph");
+          const savedValueScores = localStorage.getItem("valueScores");
+          const savedTotalQuestions = localStorage.getItem("totalQuestions");
+          const savedComparedPairs = localStorage.getItem("comparedPairs");
+
+          if (
+            savedValueGraph &&
+            savedValueScores &&
+            savedTotalQuestions &&
+            savedComparedPairs
+          ) {
+            const tempValueGraph = JSON.parse(savedValueGraph);
+            comparedPairs = new Set(
+              Object.values(JSON.parse(savedComparedPairs)) || []
+            );
+            // Convert arrays back into Set objects
+            for (let key in tempValueGraph) {
+              if (tempValueGraph.hasOwnProperty(key)) {
+                tempValueGraph[key].compared = new Set(
+                  Object.values(tempValueGraph[key].compared) || []
+                );
+              }
+            }
+            valueGraph = tempValueGraph;
+            valueScores = JSON.parse(savedValueScores);
+            totalQuestions = parseInt(savedTotalQuestions);
+            updateRanking(); // Update the ranking based on loaded scores
+            document.getElementById(
+              "questionCounter"
+            ).textContent = `Questions: ${totalQuestions}`;
+          } else {
+            initGraphAndScores();
+          }
+        }
+
+        // Reset function
+        function resetState() {
+          localStorage.clear(); // Clear local storage
+          valueGraph = {};
+          valueScores = {};
+          comparedPairs = new Set();
+          totalQuestions = 0;
+          document.getElementById(
+            "questionCounter"
+          ).textContent = `Questions: 0`;
+          initGraphAndScores();
+          updateQuestion();
+          updateRanking();
+        }
+
+        function pickValues() {
+          const useRandom = Math.random() < 0.5;
+          let valueObj1, valueObj2;
+
+          if (useRandom) {
+            let index1, index2, pairKey;
+            do {
+              index1 = Math.floor(Math.random() * values.length);
+              index2 = Math.floor(Math.random() * values.length);
+              pairKey = `${values[index1].value}:${values[index2].value}`;
+            } while (index1 === index2 || comparedPairs.has(pairKey));
+
+            valueObj1 = values[index1];
+            valueObj2 = values[index2];
+          } else {
+            let potentialValues = values.filter(
+              (value) => valueGraph[value.value].losses.length === 0
+            );
+
+            if (potentialValues.length < 2) {
+              potentialValues = values.sort(
+                (a, b) =>
+                  valueGraph[a.value].losses.length -
+                  valueGraph[b.value].losses.length
               );
+            } else {
+              potentialValues = shuffleArray(potentialValues);
+            }
+
+            valueObj1 = potentialValues[0];
+            for (let i = 1; i < potentialValues.length; i++) {
+              if (
+                !valueGraph[valueObj1.value].compared.has(
+                  potentialValues[i].value
+                )
+              ) {
+                valueObj2 = potentialValues[i];
+                break;
+              }
+            }
+
+            if (!valueObj2) {
+              let randomIndex = Math.floor(Math.random() * values.length);
+              while (
+                valueObj1.value === values[randomIndex].value ||
+                valueGraph[valueObj1.value].compared.has(
+                  values[randomIndex].value
+                )
+              ) {
+                randomIndex = Math.floor(Math.random() * values.length);
+              }
+              valueObj2 = values[randomIndex];
             }
           }
-          valueGraph = tempValueGraph;
-          valueScores = JSON.parse(savedValueScores);
-          totalQuestions = parseInt(savedTotalQuestions);
-          updateRanking(); // Update the ranking based on loaded scores
+
+          // Increment and display total questions
+          totalQuestions++;
           document.getElementById(
             "questionCounter"
           ).textContent = `Questions: ${totalQuestions}`;
-        } else {
-          initGraphAndScores();
-        }
-      }
 
-      // Reset function
-      function resetState() {
-        localStorage.clear(); // Clear local storage
-        valueGraph = {};
-        valueScores = {};
-        comparedPairs = new Set();
-        totalQuestions = 0;
-        document.getElementById("questionCounter").textContent = `Questions: 0`;
-        initGraphAndScores();
+          return [valueObj1, valueObj2];
+        }
+
+        function shuffleArray(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+          return array;
+        }
+
+        function updateQuestion() {
+          const [valueObj1, valueObj2] = pickValues();
+          document.getElementById("option1").textContent = valueObj1.value;
+          document.getElementById("option2").textContent = valueObj2.value;
+          document.getElementById("tooltip1").textContent =
+            valueObj1.definition;
+          document.getElementById("tooltip2").textContent =
+            valueObj2.definition;
+
+          document.getElementById("option1").onclick = () => {
+            // Increment appearances
+            valueGraph[valueObj1.value].appearances++;
+            valueGraph[valueObj2.value].appearances++;
+            updateGraphAndScores(valueObj1.value, valueObj2.value);
+            updateRanking();
+            updateQuestion();
+          };
+
+          document.getElementById("option2").onclick = () => {
+            // Increment appearances
+            valueGraph[valueObj1.value].appearances++;
+            valueGraph[valueObj2.value].appearances++;
+            updateGraphAndScores(valueObj2.value, valueObj1.value);
+            updateRanking();
+            updateQuestion();
+          };
+        }
+
+        function updateRanking() {
+          const rankingDiv = document.getElementById("ranking");
+          rankingDiv.innerHTML = "<h2>Ranking</h2>";
+          const sortedValues = Object.keys(valueScores).sort(
+            (a, b) => valueScores[b] - valueScores[a]
+          );
+          sortedValues.forEach((value) => {
+            const div = document.createElement("div");
+            div.textContent = `${value} (${
+              valueGraph[value].appearances
+            }): ${valueScores[value].toFixed(4)}`;
+            rankingDiv.appendChild(div);
+          });
+        }
+        document
+          .getElementById("resetButton")
+          .addEventListener("click", resetState);
+        loadState();
         updateQuestion();
         updateRanking();
-      }
-
-      function pickValues() {
-        const useRandom = Math.random() < 0.5;
-        let valueObj1, valueObj2;
-
-        if (useRandom) {
-          let index1, index2, pairKey;
-          do {
-            index1 = Math.floor(Math.random() * values.length);
-            index2 = Math.floor(Math.random() * values.length);
-            pairKey = `${values[index1].value}:${values[index2].value}`;
-          } while (index1 === index2 || comparedPairs.has(pairKey));
-
-          valueObj1 = values[index1];
-          valueObj2 = values[index2];
-        } else {
-          let potentialValues = values.filter(
-            (value) => valueGraph[value.value].losses.length === 0
-          );
-
-          if (potentialValues.length < 2) {
-            potentialValues = values.sort(
-              (a, b) =>
-                valueGraph[a.value].losses.length -
-                valueGraph[b.value].losses.length
-            );
-          } else {
-            potentialValues = shuffleArray(potentialValues);
-          }
-
-          valueObj1 = potentialValues[0];
-          for (let i = 1; i < potentialValues.length; i++) {
-            if (
-              !valueGraph[valueObj1.value].compared.has(
-                potentialValues[i].value
-              )
-            ) {
-              valueObj2 = potentialValues[i];
-              break;
-            }
-          }
-
-          if (!valueObj2) {
-            let randomIndex = Math.floor(Math.random() * values.length);
-            while (
-              valueObj1.value === values[randomIndex].value ||
-              valueGraph[valueObj1.value].compared.has(
-                values[randomIndex].value
-              )
-            ) {
-              randomIndex = Math.floor(Math.random() * values.length);
-            }
-            valueObj2 = values[randomIndex];
-          }
-        }
-
-        // Increment and display total questions
-        totalQuestions++;
-        document.getElementById(
-          "questionCounter"
-        ).textContent = `Questions: ${totalQuestions}`;
-
-        return [valueObj1, valueObj2];
-      }
-
-      function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-      }
-
-      function updateQuestion() {
-        const [valueObj1, valueObj2] = pickValues();
-        document.getElementById("option1").textContent = valueObj1.value;
-        document.getElementById("option2").textContent = valueObj2.value;
-        document.getElementById("tooltip1").textContent = valueObj1.definition;
-        document.getElementById("tooltip2").textContent = valueObj2.definition;
-
-        document.getElementById("option1").onclick = () => {
-          // Increment appearances
-          valueGraph[valueObj1.value].appearances++;
-          valueGraph[valueObj2.value].appearances++;
-          updateGraphAndScores(valueObj1.value, valueObj2.value);
-          updateRanking();
-          updateQuestion();
-        };
-
-        document.getElementById("option2").onclick = () => {
-          // Increment appearances
-          valueGraph[valueObj1.value].appearances++;
-          valueGraph[valueObj2.value].appearances++;
-          updateGraphAndScores(valueObj2.value, valueObj1.value);
-          updateRanking();
-          updateQuestion();
-        };
-      }
-
-      function updateRanking() {
-        const rankingDiv = document.getElementById("ranking");
-        rankingDiv.innerHTML = "<h2>Ranking</h2>";
-        const sortedValues = Object.keys(valueScores).sort(
-          (a, b) => valueScores[b] - valueScores[a]
-        );
-        sortedValues.forEach((value) => {
-          const div = document.createElement("div");
-          div.textContent = `${value}: Score - ${valueScores[value].toFixed(
-            4
-          )}, Appearances - ${valueGraph[value].appearances}`;
-          rankingDiv.appendChild(div);
-        });
-      }
-      document
-        .getElementById("resetButton")
-        .addEventListener("click", resetState);
-      loadState();
-      updateQuestion();
-      updateRanking();
-    </script>
-  </body>
+      </script>
+    </body>
+  </html>
 </html>
