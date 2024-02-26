@@ -201,45 +201,521 @@
       </div>
       <script>
         const values = [
-          {
-            value: "Accountability",
-            definition:
-              "Taking responsibility for one's actions and decisions.",
-          },
-          {
-            value: "Achievement",
-            definition: "The act of completing a goal or task successfully.",
-          },
-          {
-            value: "Adaptability",
-            definition:
-              "The ability to adjust to new conditions or situations.",
-          },
-          {
-            value: "Adventure",
-            definition: "An exciting or risky experience.",
-          },
-          {
-            value: "Altruism",
-            definition: "The selfless concern for the welfare of others.",
-          },
-          {
-            value: "Ambition",
-            definition: "A strong desire to achieve success or power.",
-          },
-          {
-            value: "Authenticity",
-            definition: "Being genuine and true to oneself.",
-          },
-          {
-            value: "Balance",
-            definition:
-              "A state of equilibrium or equal distribution of weight, emphasis, or importance.",
-          },
-          {
-            value: "Beauty",
-            definition: "A pleasing or attractive appearance or quality.",
-          },
+        {
+          value: "Accountability",
+          definition: "Taking responsibility for one's actions and decisions.",
+        },
+        {
+          value: "Achievement",
+          definition: "The act of completing a goal or task successfully.",
+        },
+        {
+          value: "Adaptability",
+          definition: "The ability to adjust to new conditions or situations.",
+        },
+        {
+          value: "Adventure",
+          definition: "An exciting or risky experience.",
+        },
+        {
+          value: "Altruism",
+          definition: "The selfless concern for the welfare of others.",
+        },
+        {
+          value: "Ambition",
+          definition: "A strong desire to achieve success or power.",
+        },
+        {
+          value: "Authenticity",
+          definition: "Being genuine and true to oneself.",
+        },
+        {
+          value: "Balance",
+          definition:
+            "A state of equilibrium or equal distribution of weight, emphasis, or importance.",
+        },
+        {
+          value: "Beauty",
+          definition: "A pleasing or attractive appearance or quality.",
+        },
+        {
+          value: "Being the best",
+          definition: "Striving to achieve excellence in all aspects of life.",
+        },
+        {
+          value: "Belonging",
+          definition:
+            "The feeling of acceptance and connection to a group or community.",
+        },
+        {
+          value: "Career",
+          definition: "An occupation or profession pursued for a lifetime.",
+        },
+        {
+          value: "Caring",
+          definition: "Showing concern and compassion for others.",
+        },
+        {
+          value: "Collaboration",
+          definition: "The act of working jointly on a project or task.",
+        },
+        {
+          value: "Commitment",
+          definition: "A dedication to a cause, activity, or person.",
+        },
+        {
+          value: "Community",
+          definition:
+            "A group of people living in the same area or sharing a common characteristic.",
+        },
+        {
+          value: "Compassion",
+          definition: "Sympathetic concern for the sufferings of others.",
+        },
+        {
+          value: "Competence",
+          definition: "The ability to perform a task successfully.",
+        },
+        {
+          value: "Confidence",
+          definition:
+            "A feeling of self-assurance and belief in one's abilities.",
+        },
+        {
+          value: "Connection",
+          definition: "A link or relationship between people or things.",
+        },
+        {
+          value: "Contentment",
+          definition: "A state of peaceful happiness and satisfaction.",
+        },
+        {
+          value: "Contribution",
+          definition: "The act of giving something to a cause or purpose.",
+        },
+        {
+          value: "Cooperation",
+          definition: "The act of working together for a common purpose.",
+        },
+        {
+          value: "Courage",
+          definition: "The ability to do something that frightens one.",
+        },
+        {
+          value: "Creativity",
+          definition: "The ability to use imagination to create something new.",
+        },
+        {
+          value: "Curiosity",
+          definition: "A strong desire to know or learn something.",
+        },
+        {
+          value: "Dignity",
+          definition: "The quality of being deserving of respect.",
+        },
+        {
+          value: "Diversity",
+          definition:
+            "The variety of human experiences, backgrounds, and perspectives.",
+        },
+        {
+          value: "Environment",
+          definition:
+            "The surroundings or conditions in which something exists.",
+        },
+        {
+          value: "Efficiency",
+          definition:
+            "The ability to achieve a desired outcome with minimal effort or waste.",
+        },
+        {
+          value: "Equality",
+          definition:
+            "The state of being equal in status, rights, or opportunities.",
+        },
+        {
+          value: "Ethics",
+          definition: "Moral principles that govern behavior.",
+        },
+        {
+          value: "Excellence",
+          definition: "The quality of being outstanding or extremely good.",
+        },
+        {
+          value: "Fairness",
+          definition: "Treating everyone equally and justly.",
+        },
+        {
+          value: "Faith",
+          definition:
+            "A strong belief in something for which there is no proof.",
+        },
+        {
+          value: "Family",
+          definition:
+            "A group of people who are related to each other, either by blood or marriage.",
+        },
+        {
+          value: "Financial stability",
+          definition:
+            "Having enough income to meet your needs and live comfortably.",
+        },
+        {
+          value: "Forgiveness",
+          definition: "The act of pardoning someone for a wrong.",
+        },
+        {
+          value: "Freedom",
+          definition:
+            "The power or right to act, speak, or think as one wants without hindrance or restraint.",
+        },
+        {
+          value: "Friendship",
+          definition:
+            "A close relationship between two people who share common interests and enjoy spending time together.",
+        },
+        {
+          value: "Fun",
+          definition: "Enjoyment, amusement, or lighthearted pleasure.",
+        },
+        {
+          value: "Future generations",
+          definition:
+            "The generations of people who will be born in the future.",
+        },
+        {
+          value: "Generosity",
+          definition: "The quality of being kind and giving.",
+        },
+        {
+          value: "Giving back",
+          definition: "Donating time, resources, or skills to help others.",
+        },
+        {
+          value: "Grace",
+          definition: "Elegant or courteous behavior.",
+        },
+        {
+          value: "Gratitude",
+          definition: "The feeling of thankfulness and appreciation.",
+        },
+        {
+          value: "Growth",
+          definition:
+            "The process of increasing in size, quantity, or development.",
+        },
+        {
+          value: "Harmony",
+          definition: "The state of agreement or concord.",
+        },
+        {
+          value: "Health",
+          definition: "The state of being free from illness or disease.",
+        },
+        {
+          value: "Home",
+          definition: "A place where one lives permanently or habitually.",
+        },
+        {
+          value: "Honesty",
+          definition: "The quality of being truthful and sincere.",
+        },
+        {
+          value: "Hope",
+          definition:
+            "A feeling of expectation and desire for a positive outcome.",
+        },
+        {
+          value: "Humility",
+          definition:
+            "The quality of having a modest view of one's importance.",
+        },
+        {
+          value: "Humor",
+          definition: "The quality of being amusing or comic.",
+        },
+        {
+          value: "Inclusion",
+          definition:
+            "The act of including or accepting people as part of a group.",
+        },
+        {
+          value: "Independence",
+          definition: "The state of being self-sufficient.",
+        },
+        {
+          value: "Initiative",
+          definition: "The ability to take the initiative in doing something.",
+        },
+        {
+          value: "Integrity",
+          definition:
+            "The quality of being honest and having strong moral principles.",
+        },
+        {
+          value: "Intuition",
+          definition:
+            "A feeling or sense that something is true without any supporting evidence or logical reasoning.",
+        },
+        {
+          value: "Job security",
+          definition:
+            "The feeling of certainty that one will not lose their job.",
+        },
+        {
+          value: "Joy",
+          definition: "A feeling of great pleasure and happiness.",
+        },
+        {
+          value: "Justice",
+          definition: "The fair and equal treatment of all people.",
+        },
+        {
+          value: "Kindness",
+          definition: "The quality of being generous, caring, and considerate.",
+        },
+        {
+          value: "Knowledge",
+          definition:
+            "Facts, information, and skills acquired through experience or learning.",
+        },
+        {
+          value: "Leadership",
+          definition:
+            "The action of leading a group of people or an organization.",
+        },
+        {
+          value: "Learning",
+          definition:
+            "The act of acquiring knowledge or skills through study, experience, or instruction.",
+        },
+        {
+          value: "Legacy",
+          definition:
+            "Something left behind by a person or group that is remembered.",
+        },
+        {
+          value: "Leisure",
+          definition: "Free time for relaxation and enjoyment.",
+        },
+        {
+          value: "Love",
+          definition: "An intense feeling of deep affection and care.",
+        },
+        {
+          value: "Loyalty",
+          definition: "Faithfulness to a person, group, or cause.",
+        },
+        {
+          value: "Making a difference",
+          definition: "Having a positive impact on the world.",
+        },
+        {
+          value: "Nature",
+          definition:
+            "The physical world around us, including plants, animals, landscapes, and the processes that sustain them.",
+        },
+        {
+          value: "Openness",
+          definition:
+            "The willingness to listen to new ideas and be receptive to different perspectives.",
+        },
+        {
+          value: "Optimism",
+          definition:
+            "The feeling or belief that good things will happen in the future.",
+        },
+        {
+          value: "Order",
+          definition: "A state of neatness, tidiness, and organization.",
+        },
+        {
+          value: "Parenting",
+          definition: "The act of raising a child.",
+        },
+        {
+          value: "Patience",
+          definition: "The ability to wait calmly and without complaining.",
+        },
+        {
+          value: "Patriotism",
+          definition: "Love and devotion to one's country.",
+        },
+        {
+          value: "Peace",
+          definition: "Freedom from war, violence, or conflict.",
+        },
+        {
+          value: "Perseverance",
+          definition:
+            "Continued effort to do or achieve something despite difficulties.",
+        },
+        {
+          value: "Personal fulfillment",
+          definition:
+            "A sense of satisfaction and accomplishment in one's life.",
+        },
+        {
+          value: "Power",
+          definition:
+            "The ability to control or influence people or situations.",
+        },
+        {
+          value: "Pride",
+          definition:
+            "A feeling of deep satisfaction or pleasure from one's achievements.",
+        },
+        {
+          value: "Recognition",
+          definition:
+            "The act of acknowledging or noticing someone or something.",
+        },
+        {
+          value: "Reliability",
+          definition:
+            "The ability to be trusted to do something or to be of good quality.",
+        },
+        {
+          value: "Resourcefulness",
+          definition:
+            "The ability to find clever or inventive ways to overcome difficulties.",
+        },
+        {
+          value: "Respect",
+          definition:
+            "A feeling of deep admiration for someone or something that is considered to be good, important, or superior.",
+        },
+        {
+          value: "Responsibility",
+          definition: "The state of being accountable for one's own actions.",
+        },
+        {
+          value: "Risk-taking",
+          definition: "The willingness to take risks or chances.",
+        },
+        {
+          value: "Safety",
+          definition: "The state of being protected from harm or danger.",
+        },
+        {
+          value: "Security",
+          definition: "The state of being safe and free from danger or threat.",
+        },
+        {
+          value: "Self-discipline",
+          definition:
+            "The ability to control one's own behavior, especially in order to achieve a goal.",
+        },
+        {
+          value: "Self-expression",
+          definition:
+            "The act of communicating one's thoughts, feelings, and ideas.",
+        },
+        {
+          value: "Self-respect",
+          definition: "A feeling of respect and value for oneself.",
+        },
+        {
+          value: "Serenity",
+          definition: "A state of calmness and peacefulness.",
+        },
+        {
+          value: "Service",
+          definition: "The act of helping or doing work for someone else.",
+        },
+        {
+          value: "Simplicity",
+          definition: "The quality of being easy to understand or do.",
+        },
+        {
+          value: "Spirituality",
+          definition:
+            "The quality of being concerned with the human spirit or soul as opposed to material or physical things.",
+        },
+        {
+          value: "Sportsmanship",
+          definition: "Fair play and good manners in a sport.",
+        },
+        {
+          value: "Stewardship",
+          definition: "The responsible caretaking of something.",
+        },
+        {
+          value: "Success",
+          definition: "The accomplishment of an aim or purpose.",
+        },
+        {
+          value: "Teamwork",
+          definition:
+            "The act of working together as a team to achieve a common goal.",
+        },
+        {
+          value: "Thrift",
+          definition: "Careful use of money or resources and avoiding waste.",
+        },
+        {
+          value: "Time",
+          definition:
+            "The indefinite continued progress of existence and events in the past, present, and future.",
+        },
+        {
+          value: "Tradition",
+          definition:
+            "A belief or custom that has been passed down from generation to generation.",
+        },
+        {
+          value: "Travel",
+          definition: "The act of going from one place to another.",
+        },
+        {
+          value: "Trust",
+          definition:
+            "A firm belief in the reliability, strength, or truth of someone or something.",
+        },
+        {
+          value: "Truth",
+          definition: "That which is true or in accordance with fact.",
+        },
+        {
+          value: "Understanding",
+          definition: "The ability to comprehend the meaning of something.",
+        },
+        {
+          value: "Uniqueness",
+          definition: "The quality of being different from anything else.",
+        },
+        {
+          value: "Usefulness",
+          definition:
+            "The quality of being useful or having a practical purpose.",
+        },
+        {
+          value: "Vision",
+          definition:
+            "The ability to think about or plan the future with imagination or wisdom.",
+        },
+        {
+          value: "Vulnerability",
+          definition: "The state of being open to attack or damage.",
+        },
+        {
+          value: "Wealth",
+          definition: "An abundance of possessions and money.",
+        },
+        {
+          value: "Well-being",
+          definition: "The state of being in good health and spirits.",
+        },
+        {
+          value: "Wholeheartedness",
+          definition:
+            "The quality of being complete, sincere, and enthusiastic.",
+        },
+        {
+          value: "Wisdom",
+          definition:
+            "The ability to use knowledge and experience to make good decisions.",
+        },
         ];
 
         let valueGraph = {};
@@ -299,8 +775,19 @@
           localStorage.setItem("comparedPairs", JSON.stringify(comparedPairs));
         }
         function showDefinition(tooltipId) {
-          const tooltipText = document.getElementById(tooltipId).textContent;
-        }
+  var tooltip = document.getElementById(tooltipId);
+  
+  // Check the current visibility state and toggle it
+  if (tooltip.style.visibility === "visible") {
+    tooltip.style.visibility = "hidden";
+    tooltip.style.opacity = "0";
+    tooltip.style.transform = "translateX(-50%)"; // Reset the transform if you're using it for the toggle
+  } else {
+    tooltip.style.visibility = "visible";
+    tooltip.style.opacity = "1";
+    tooltip.style.transform = "translateX(-50%) translateY(-5px)"; // Apply the transform for visibility
+  }
+}
         function loadState() {
           const savedValueGraph = localStorage.getItem("valueGraph");
           const savedValueScores = localStorage.getItem("valueScores");
@@ -453,19 +940,69 @@
         }
 
         function updateRanking() {
-          const rankingDiv = document.getElementById("ranking");
-          rankingDiv.innerHTML = "<h2>Ranking</h2>";
-          const sortedValues = Object.keys(valueScores).sort(
-            (a, b) => valueScores[b] - valueScores[a]
-          );
-          sortedValues.forEach((value) => {
-            const div = document.createElement("div");
-            div.textContent = `${value} (${
-              valueGraph[value].appearances
-            }): ${valueScores[value].toFixed(4)}`;
-            rankingDiv.appendChild(div);
-          });
-        }
+  const rankingDiv = document.getElementById("ranking");
+  rankingDiv.innerHTML = "<h2>Ranking</h2><br>";
+
+  // Create table and its structure
+  const table = document.createElement("table");
+  table.style.width = '100%'; // Set table width
+  const thead = document.createElement("thead");
+  const tbody = document.createElement("tbody");
+  table.appendChild(thead);
+  table.appendChild(tbody);
+
+  // Create header row
+  const headerRow = document.createElement("tr");
+  const emptyHeader = document.createElement("th"); // Empty header for shifting
+  const valueHeader = document.createElement("th");
+  valueHeader.textContent = "Value";
+  const scoreHeader = document.createElement("th");
+  scoreHeader.textContent = "Score";
+  const seenHeader = document.createElement("th");
+  seenHeader.textContent = "Seen";
+  // Apply inline CSS for column width
+  valueHeader.style.width = '40%'; // Adjust as needed
+  scoreHeader.style.width = '30%'; // Adjust as needed
+  seenHeader.style.width = '30%'; // Adjust as needed
+
+  headerRow.appendChild(emptyHeader); // Add empty cell for shifting
+  headerRow.appendChild(valueHeader);
+  headerRow.appendChild(scoreHeader);
+  headerRow.appendChild(seenHeader);
+  thead.appendChild(headerRow);
+
+  // Sort and iterate through values to populate the table
+  const sortedValues = Object.keys(valueScores).sort((a, b) => valueScores[b] - valueScores[a]);
+  sortedValues.forEach((value) => {
+    const row = document.createElement("tr");
+
+    const emptyCell = document.createElement("td"); // Empty cell for shifting
+    const valueCell = document.createElement("td");
+    valueCell.textContent = value;
+    const scoreCell = document.createElement("td");
+    scoreCell.textContent = valueScores[value].toFixed(4);
+    const seenCell = document.createElement("td");
+    seenCell.textContent = valueGraph[value].appearances;
+
+    // Apply the same inline CSS for data cells
+    valueCell.style.width = '40%'; // Adjust as needed
+    scoreCell.style.width = '30%'; // Adjust as needed
+    seenCell.style.width = '30%'; // Adjust as needed
+
+    row.appendChild(emptyCell); // Add empty cell for shifting
+    row.appendChild(valueCell);
+    row.appendChild(scoreCell);
+    row.appendChild(seenCell);
+
+    tbody.appendChild(row);
+  });
+
+  // Append the table to the rankingDiv
+  rankingDiv.appendChild(table);
+}
+
+
+
         document
           .getElementById("resetButton")
           .addEventListener("click", resetState);
