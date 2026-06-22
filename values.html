@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Value Comparator</title>
+  <style>
+    :root {
+      --background-color: #000;
+      --primary-color: #0f0;
+      --button-hover-color: #333;
+      --tooltip-color: #555;
+      --font-family: "Courier New", monospace;
+      --reset-button-color: #222;
+      --reset-button-border-color: #0a0;
+    }
+  
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+  
+    body {
+      font-family: var(--font-family);
+      color: var(--primary-color);
+      background-color: var(--background-color);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    #app {
+      max-width: 600px;
+      margin: auto;
+      text-align: center;
+    }
+  
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+  
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 180px;
+      background-color: var(--tooltip-color);
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: 150%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      box-shadow: 0 0 10px 0 rgba(0, 255, 0, 0.5);
+      opacity: 0;
+      transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+    }
+  
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(-50%) translateY(-5px);
+    }
+  
+    .option-btn,
+    .info-btn {
+      background-color: #222;
+      color: var(--primary-color);
+      border: 1px solid var(--primary-color);
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      display: inline-block;
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+  
+    .option-btn:hover,
+    .info-btn:hover {
+      background-color: var(--button-hover-color);
+    }
+  
+    #question h1 {
+      margin-bottom: 30px;
+      font-size: 24px;
+    }
+  
+    #options {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+    }
+  
+    #options > div {
+      flex: 1;
+      text-align: center;
+    }
+  
+    #options > div:not(:nth-child(2)) {
+      min-width: 100px;
+    }
+  
+    #ranking {
+      margin-top: 20px;
+    }
+  
+    #controls {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+  
+    #resetButton {
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: var(--reset-button-color);
+      color: var(--primary-color);
+      border: 1px solid var(--reset-button-border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 2px rgba(15, 255, 0, 0.2);
+    }
+  
+    #resetButton:hover {
+      background-color: var(--button-hover-color);
+      box-shadow: 0 2px 4px rgba(15, 255, 0, 0.4);
+    }
+  
+    @media (max-width: 600px) {
+      #question h1,
+      .option-btn,
+      .info-btn {
+        font-size: calc(4vw);
+      }
+  
+      .option-btn,
+      .info-btn {
+        padding: calc(2vw);
+      }
+  
+      #options {
+        flex-direction: column;
+      }
+  
+      #options > div:not(:nth-child(2)) {
+        min-width: 0;
+        width: 100%;
+        margin: 10px 0;
+      }
+  
+      .tooltip .tooltiptext {
+        font-size: calc(3.5vw);
+      }
+  
+      #controls {
+        flex-direction: column;
+        align-items: center  
+    }
+
+</style>
+</head>
+<body>
+  <div id="app">
+    <div id="controls">
+      <div id="questionCounter">Questions: 0</div>
+      <button id="resetButton">Reset</button>
+    </div>
+        <div id="question">
+            <h1>Which is more important to you?</h1>
+          </div>
+          <div id="options">
+            <div>
+              <button id="option1" class="option-btn"></button>
+              <div class="tooltip">
+                <button class="info-btn" onclick="showDefinition('tooltip1')">?</button>
+                <span class="tooltiptext" id="tooltip1"></span>
+              </div>
+            </div>
+            <div>or</div>
+            <div>
+              <button id="option2" class="option-btn"></button>
+              <div class="tooltip">
+                <button class="info-btn" onclick="showDefinition('tooltip2')">?</button>
+                <span class="tooltiptext" id="tooltip2"></span>
+              </div>
+            </div>
+          </div>
+          <div id="ranking"></div>
+      </div>
+      <script>
+        const values = [
+  {
+    value: "Accountability",
+    definition: "Owning the impact of my actions and choices, both the successes and the mistakes." 
+  },
+  {
+    value: "Achievement",
+    definition: "Striving for meaningful goals and experiencing the satisfaction of accomplishment." 
+  },
+  {
+    value: "Adaptability",
+    definition: "Embracing change and finding creative solutions to overcome challenges." 
+  },
+  {
+    value: "Adventure",
+    definition: "Seeking out new and exciting experiences that push my boundaries." 
+  },
+  {
+    value: "Altruism",
+    definition: "Prioritizing the well-being of others and acting with compassion." 
+  },
+  {
+    value: "Ambition",
+    definition: "Striving for success and aiming to make a positive impact." 
+  },
+  {
+    value: "Authenticity",
+    definition: "Living in alignment with my true self and embracing my unique qualities." 
+  },
+  {
+    value: "Balance",
+    definition: "Striving for harmony and well-being in all aspects of my life." 
+  },
+  {
+    value: "Beauty",
+    definition: "Seeking out and appreciating beauty in the world around me." 
+  },
+  {
+    value: "Being the best",
+    definition: "Continuously pushing myself to grow and excel in all areas of my life." 
+  },
+  {
+    value: "Belonging",
+    definition: "Fostering strong connections and finding my place within supportive communities." 
+  },
+  {
+    value: "Career",
+    definition: "Finding fulfillment through work that aligns with my values and passions." 
+  },
+  {
+    value: "Caring",
+    definition: "Showing empathy and extending kindness to others." 
+  },
+  {
+    value: "Collaboration",
+    definition: "Working together with others to achieve shared goals."  
+  },
+  {
+    value: "Commitment",
+    definition: "Dedicating myself fully to my goals, relationships, and responsibilities."
+  },
+  {
+    value: "Community",
+    definition: "Contributing to and nurturing the communities I belong to." 
+  },
+  {
+    value: "Compassion",
+    definition: "Actively seeking to understand and alleviate the suffering of others." 
+  },
+  {
+    value: "Competence",
+    definition: "Continuously developing my skills and knowledge to perform tasks effectively." 
+  },
+  {
+    value: "Confidence",
+    definition: "Believing in my abilities and having the courage to pursue my goals."
+  },
+  {
+    value: "Connection",
+    definition: "Building meaningful relationships based on open communication and trust." 
+  },
+  {
+    value: "Contentment",
+    definition: "Cultivating gratitude and finding peace in the present moment." 
+  },
+  {
+    value: "Contribution",
+    definition: "Giving my time, energy, and resources to make a positive impact on the world." 
+  },
+  {
+    value: "Cooperation",
+    definition: "Working with others respectfully to achieve common goals." 
+  },
+  {
+    value: "Courage",
+    definition: "Facing my fears and acting with conviction, even in difficult situations." 
+  },
+  {
+    value: "Creativity",
+    definition: "Expressing myself through unique ideas and exploring new possibilities."
+  },
+  {
+    value: "Curiosity",
+    definition: "Maintaining a lifelong love of learning and exploration." 
+  },
+  {
+    value: "Dignity",
+    definition: "Treating myself and all others with respect and inherent worth."  
+  },
+  {
+    value: "Diversity",
+    definition: "Embracing and celebrating the unique perspectives and experiences of others." 
+  },
+  { 
+    value: "Environment",
+    definition: "Respecting and protecting the natural world for future generations." 
+  },
+  {
+    value: "Efficiency",
+    definition: "Using my time and resources wisely to maximize results." 
+  },
+  {
+    value: "Equality",
+    definition: "Advocating for justice and equal opportunities for all people." 
+  },
+  {
+    value: "Ethics",
+    definition: "Upholding strong moral principles and acting with integrity."  
+  },
+  {
+    value: "Excellence",
+    definition: "Striving for my best in all that I do." 
+  },
+  {
+    value: "Fairness",
+    definition: "Treating everyone justly and equitably." 
+  },
+  {
+    value: "Faith",
+    definition: "Finding strength and guidance in my beliefs." 
+  },
+  {
+    value: "Family",
+    definition: "Prioritizing familial relationships and the well-being of family members." 
+  },
+  {
+    value: "Financial stability",
+    definition: "Managing my resources responsibly to ensure a secure future. "
+  },
+  {
+    value: "Forgiveness",
+    definition: "Letting go of resentment and practicing compassion towards myself and others." 
+  },
+  {
+    value: "Freedom",
+    definition: "Cherishing my independence and the ability to make my own choices."  
+  },
+  {
+    value: "Friendship",
+    definition: "Cultivating supportive and enriching relationships based on loyalty and shared values."
+  },
+  {
+    value: "Fun",
+    definition: "Embracing playfulness, laughter, and experiences that bring joy."
+  },
+  {
+    value: "Future generations",
+    definition: "Making responsible choices that consider the long-term well-being of the planet and its inhabitants." 
+  },
+  {
+    value: "Generosity",
+    definition: "Sharing my time, resources, and talents freely with others." 
+  },
+  {
+    value: "Giving back",
+    definition: "Expressing gratitude by contributing to my community and causes I believe in."
+  },
+  {
+    value: "Grace",
+    definition: "Treating myself and others with kindness, understanding, and forgiveness."
+  },
+  {
+    value: "Gratitude",
+    definition: "Actively appreciating the good in my life and cultivating a thankful heart." 
+  },
+  {
+    value: "Growth",
+    definition: "Continuously learning, evolving, and striving to become a better version of myself." 
+  },
+  {
+    value: "Harmony",
+    definition: "Promoting peace and understanding within myself and my relationships." 
+  },
+  {
+    value: "Health",
+    definition: "Prioritizing my physical and mental well-being." 
+  },
+  {
+    value: "Home",
+    definition: "Creating a nurturing and comfortable space that reflects me."
+  },
+  {
+    value: "Honesty",
+    definition: "Living with integrity and being truthful with myself and others." 
+  },
+  {
+    value: "Hope",
+    definition: "Maintaining optimism and believing in a positive future." 
+  },
+  {
+    value: "Humility",
+    definition: "Recognizing my limitations and being open to learning from others."  
+  },
+  {
+    value: "Humor",
+    definition: "Finding joy and lightness in life, even during challenging times." 
+  },
+  {
+    value: "Inclusion",
+    definition: "Creating welcoming environments where everyone feels valued and respected." 
+  },
+  {
+    value: "Independence",
+    definition: "Embracing self-reliance and the ability to make and carry out my own decisions." 
+  },
+  {
+    value: "Initiative",
+    definition: "Being proactive and taking action to make things happen." 
+  },
+  {
+    value: "Integrity",
+    definition: "Upholding strong moral principles and doing the right thing, even when difficult."  
+  },
+  {
+    value: "Intuition",
+    definition: "Trusting my inner voice and using it as a guide for decision-making." 
+  },
+  {
+    value: "Job security",
+    definition: "Seeking stability and peace of mind through meaningful employment." 
+  },
+  {
+    value: "Joy",
+    definition: "Cultivating a sense of happiness and finding delight in everyday moments." 
+  },
+  {
+    value: "Justice",
+    definition: "Standing up for fairness and advocating for the rights of all." 
+  },
+  {
+    value: "Kindness",
+    definition: "Treating others with compassion, empathy, and respect."  
+  },
+  {
+    value: "Knowledge",
+    definition: "Pursuing lifelong learning and expanding my understanding of the world."
+    },
+    {
+    value: "Leadership",
+    definition: "Inspiring and guiding others towards a shared vision." 
+  },
+  {
+    value: "Learning",
+    definition: "Embracing curiosity and actively seeking new knowledge and experiences." 
+  },
+  {
+    value: "Legacy",
+    definition: "Striving to leave a positive and lasting impact on the world."
+  },
+  {
+    value: "Leisure",
+    definition: "Embracing rest, relaxation, and activities that bring me joy."
+  },
+  {
+    value: "Love",
+    definition: "Cultivating deep affection and care for myself and others."
+  },
+  {
+    value: "Loyalty",
+    definition: "Staying committed to the people and causes I believe in."
+  },
+  {
+    value: "Making a difference",
+    definition: "Using my actions and voice to create a positive impact on the world." 
+  },
+  {
+    value: "Nature",
+    definition: "Appreciating the beauty of the natural world and protecting it for future generations." 
+  },
+  {
+    value: "Openness",
+    definition: "Being receptive to new ideas, perspectives, and experiences."  
+  },
+  {
+    value: "Optimism",
+    definition: "Maintaining a positive outlook and believing in the possibility of a better future. "
+  },
+  {
+    value: "Order",
+    definition: "Creating systems and structures to bring organization and clarity to my life." 
+  },
+  {
+    value: "Parenting",
+    definition: "Nurturing and guiding my children with love and wisdom."
+  },
+  {
+    value: "Patience",
+    definition: "Remaining calm under pressure and persevering through challenges."  
+  },
+  {
+    value: "Patriotism",
+    definition: "Showing love and respect for my country while advocating for its betterment." 
+  },
+  {
+    value: "Peace",
+    definition: "Promoting harmony, understanding, and resolving conflicts nonviolently." 
+  },
+  {
+    value: "Perseverance",
+    definition: "Overcoming obstacles and never giving up on my goals." 
+  },
+  {
+    value: "Personal fulfillment",
+    definition: "Finding meaning and satisfaction in my life's pursuits."
+  },
+  {
+    value: "Power",
+    definition: "Harnessing my influence to create positive change for myself and others." 
+  },
+  {
+    value: "Pride",
+    definition: "Celebrating my accomplishments and recognizing my own worth."
+  },
+  {
+    value: "Recognition",
+    definition: "Appreciating when my efforts and achievements are acknowledged." 
+  },
+  {
+    value: "Reliability",
+    definition: "Being dependable and following through on my commitments." 
+  },
+  {
+    value: "Resourcefulness",
+    definition: "Finding creative solutions and making the most of what I have."  
+  },
+  {
+    value: "Respect",
+    definition: "Treating myself and others with dignity and consideration." 
+  },
+  {
+    value: "Responsibility",
+    definition: "Taking ownership of my actions, choices and their consequences." 
+  },
+  {
+    value: "Risk-taking",
+    definition: "Stepping outside my comfort zone and embracing the potential for growth." 
+  },
+  {
+    value: "Safety",
+    definition: "Prioritizing my physical and emotional well-being."  
+  },
+  {
+    value: "Security",
+    definition: "Seeking stability and peace of mind in all aspects of my life."  
+  },
+  {
+    value: "Self-discipline",
+    definition: "Exercising self-control to achieve my goals and live in accordance with my values." 
+  },
+  {
+    value: "Self-expression",
+    definition: "Communicating my authentic self through my creativity, opinions, and choices."  
+  },
+  {
+    value: "Self-respect",
+    definition: "Valuing myself, my time, and my boundaries."  
+  },
+  {
+    value: "Serenity",
+    definition: "Cultivating inner peace and tranquility." 
+  },
+  {
+    value: "Service",
+    definition: "Helping others and contributing to my community."  
+  },
+  {
+    value: "Simplicity",
+    definition: "Finding joy in the essentials and minimizing distractions."  
+  },
+  {
+    value: "Spirituality",
+    definition: "Connecting with a higher power or sense of purpose beyond myself."
+  },
+  {
+    value: "Sportsmanship",
+    definition: "Exhibiting fairness, respect, and graciousness in competition."  
+  },
+  {
+    value: "Stewardship",
+    definition: "Responsibly managing and caring for the resources entrusted to me." 
+  },
+  {
+    value: "Success",
+    definition: "Defining success on my own terms and achieving what matters most." 
+  },
+  {
+    value: "Teamwork",
+    definition: "Collaborating effectively with others to achieve shared goals."   
+  },
+  {
+    value: "Thrift",
+    definition: "Managing my resources wisely and avoiding wastefulness." 
+  },
+  {
+    value: "Time",
+    definition: "Valuing my time and using it intentionally." 
+  },
+  {
+    value: "Tradition",
+    definition: "Honoring and preserving meaningful customs and rituals." 
+  },
+  {
+    value: "Travel",
+    definition: "Expanding my horizons through exploration and experiencing different cultures."  
+  },
+  {
+    value: "Trust",
+    definition: "Believing in the reliability and good intentions of others." 
+  },
+  {
+    value: "Truth",
+    definition: "Seeking truth and living in accordance with my understanding of it." 
+  },
+  {
+    value: "Understanding",
+    definition: "Making an effort to empathize with others and see things from their perspective."     
+  },
+  {
+    value: "Uniqueness",
+    definition: "Embracing my individuality and what makes me special. "
+  },
+  {
+    value: "Usefulness",
+    definition: "Striving to be helpful and make a practical contribution."
+  },
+  {
+    value: "Vision",
+    definition: "Imagining a better future and working towards making it a reality."  
+  },
+  {
+    value: "Vulnerability",
+    definition: "Being open and authentic, even when it feels risky." 
+  },
+  {
+    value: "Wealth",
+    definition: "Seeking financial well-being while recognizing that true wealth encompasses more than material possessions."  
+  },
+  {
+    value: "Well-being",
+    definition: "Prioritizing my overall health and happiness, physically, mentally, and emotionally." 
+  },
+  {
+    value: "Wholeheartedness",
+    definition: "Living with sincerity, enthusiasm, and full commitment." 
+  },
+  {
+    value: "Wisdom",
+    definition: "Actively seeking knowledge, experience, and sound judgment."  
+  } 
+];
+
+        let valueGraph = {};
+        let valueScores = {};
+        let comparedPairs = new Set(); // Tracks compared pairs to avoid repeats
+        let totalQuestions = 0; // Total number of questions asked
+
+        function initGraphAndScores() {
+          values.forEach((value) => {
+            valueGraph[value.value] = {
+              wins: [],
+              losses: [],
+              appearances: 0, // Track how many times each value has appeared in a question
+              compared: new Set(), // Track comparisons for each value
+            };
+            valueScores[value.value] = 1 / values.length; // Initialize scores equally
+          });
+        }
+
+        function updateGraphAndScores(winner, loser) {
+          valueGraph[winner].wins.push(loser);
+          valueGraph[loser].losses.push(winner);
+          valueGraph[winner].compared.add(loser);
+          valueGraph[loser].compared.add(winner);
+          comparedPairs.add(winner + ":" + loser); // Track this comparison
+          comparedPairs.add(loser + ":" + winner); // Also track the reverse comparison to avoid repetition
+
+          const numPlayers = Object.keys(valueGraph).length;
+          const dampingFactor = 0.5;
+          let scores = Object.assign({}, valueScores);
+
+          for (let i = 0; i < 100; i++) {
+            let newScores = {};
+            let totalScore = 0;
+
+            for (let player in valueGraph) {
+              newScores[player] = (1 - dampingFactor) / numPlayers;
+              let winScoreSum = valueGraph[player].wins
+                .map((winner) => scores[winner])
+                .reduce((acc, current) => acc + current, 0);
+              newScores[player] += dampingFactor * winScoreSum;
+              totalScore += newScores[player];
+            }
+
+            for (let player in newScores) {
+              newScores[player] /= totalScore;
+            }
+
+            scores = Object.assign({}, newScores);
+          }
+
+          valueScores = scores;
+          // Save state to local storage
+          localStorage.setItem("valueGraph", JSON.stringify(valueGraph));
+          localStorage.setItem("valueScores", JSON.stringify(valueScores));
+          localStorage.setItem("totalQuestions", totalQuestions.toString());
+          localStorage.setItem("comparedPairs", JSON.stringify(comparedPairs));
+        }
+        function showDefinition(tooltipId) {
+  var tooltip = document.getElementById(tooltipId);
+  
+  // Check the current visibility state and toggle it
+  if (tooltip.style.visibility === "visible") {
+    tooltip.style.visibility = "hidden";
+    tooltip.style.opacity = "0";
+    tooltip.style.transform = "translateX(-50%)"; // Reset the transform if you're using it for the toggle
+  } else {
+    tooltip.style.visibility = "visible";
+    tooltip.style.opacity = "1";
+    tooltip.style.transform = "translateX(-50%) translateY(-5px)"; // Apply the transform for visibility
+  }
+}
+        function loadState() {
+          const savedValueGraph = localStorage.getItem("valueGraph");
+          const savedValueScores = localStorage.getItem("valueScores");
+          const savedTotalQuestions = localStorage.getItem("totalQuestions");
+          const savedComparedPairs = localStorage.getItem("comparedPairs");
+
+          if (
+            savedValueGraph &&
+            savedValueScores &&
+            savedTotalQuestions &&
+            savedComparedPairs
+          ) {
+            const tempValueGraph = JSON.parse(savedValueGraph);
+            comparedPairs = new Set(
+              Object.values(JSON.parse(savedComparedPairs)) || []
+            );
+            // Convert arrays back into Set objects
+            for (let key in tempValueGraph) {
+              if (tempValueGraph.hasOwnProperty(key)) {
+                tempValueGraph[key].compared = new Set(
+                  Object.values(tempValueGraph[key].compared) || []
+                );
+              }
+            }
+            valueGraph = tempValueGraph;
+            valueScores = JSON.parse(savedValueScores);
+            totalQuestions = parseInt(savedTotalQuestions);
+            updateRanking(); // Update the ranking based on loaded scores
+            document.getElementById(
+              "questionCounter"
+            ).textContent = `Questions: ${totalQuestions}`;
+          } else {
+            initGraphAndScores();
+          }
+        }
+
+        // Reset function
+        function resetState() {
+          localStorage.clear(); // Clear local storage
+          valueGraph = {};
+          valueScores = {};
+          comparedPairs = new Set();
+          totalQuestions = 0;
+          document.getElementById(
+            "questionCounter"
+          ).textContent = `Questions: 0`;
+          initGraphAndScores();
+          updateQuestion();
+          updateRanking();
+        }
+
+        function pickValues() {
+          const useRandom = Math.random() < 0.5;
+          let valueObj1, valueObj2;
+
+          if (useRandom) {
+            let index1, index2, pairKey;
+            do {
+              index1 = Math.floor(Math.random() * values.length);
+              index2 = Math.floor(Math.random() * values.length);
+              pairKey = `${values[index1].value}:${values[index2].value}`;
+            } while (index1 === index2 || comparedPairs.has(pairKey));
+
+            valueObj1 = values[index1];
+            valueObj2 = values[index2];
+          } else {
+            let potentialValues = values.filter(
+              (value) => valueGraph[value.value].losses.length === 0
+            );
+
+            if (potentialValues.length < 2) {
+              potentialValues = values.sort(
+                (a, b) =>
+                  valueGraph[a.value].losses.length -
+                  valueGraph[b.value].losses.length
+              );
+            } else {
+              potentialValues = shuffleArray(potentialValues);
+            }
+
+            valueObj1 = potentialValues[0];
+            for (let i = 1; i < potentialValues.length; i++) {
+              if (
+                !valueGraph[valueObj1.value].compared.has(
+                  potentialValues[i].value
+                )
+              ) {
+                valueObj2 = potentialValues[i];
+                break;
+              }
+            }
+
+            if (!valueObj2) {
+              let randomIndex = Math.floor(Math.random() * values.length);
+              while (
+                valueObj1.value === values[randomIndex].value ||
+                valueGraph[valueObj1.value].compared.has(
+                  values[randomIndex].value
+                )
+              ) {
+                randomIndex = Math.floor(Math.random() * values.length);
+              }
+              valueObj2 = values[randomIndex];
+            }
+          }
+
+          // Increment and display total questions
+          totalQuestions++;
+          document.getElementById(
+            "questionCounter"
+          ).textContent = `Questions: ${totalQuestions}`;
+
+          return [valueObj1, valueObj2];
+        }
+
+        function shuffleArray(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+          return array;
+        }
+
+        function updateQuestion() {
+          const [valueObj1, valueObj2] = pickValues();
+          document.getElementById("option1").textContent = valueObj1.value;
+          document.getElementById("option2").textContent = valueObj2.value;
+          document.getElementById("tooltip1").textContent =
+            valueObj1.definition;
+          document.getElementById("tooltip2").textContent =
+            valueObj2.definition;
+
+          document.getElementById("option1").onclick = () => {
+            // Increment appearances
+            valueGraph[valueObj1.value].appearances++;
+            valueGraph[valueObj2.value].appearances++;
+            updateGraphAndScores(valueObj1.value, valueObj2.value);
+            updateRanking();
+            updateQuestion();
+          };
+
+          document.getElementById("option2").onclick = () => {
+            // Increment appearances
+            valueGraph[valueObj1.value].appearances++;
+            valueGraph[valueObj2.value].appearances++;
+            updateGraphAndScores(valueObj2.value, valueObj1.value);
+            updateRanking();
+            updateQuestion();
+          };
+        }
+
+        function updateRanking() {
+  const rankingDiv = document.getElementById("ranking");
+  rankingDiv.innerHTML = "<h2>Ranking</h2><br>";
+
+  // Create table and its structure
+  const table = document.createElement("table");
+  table.style.width = '100%'; // Set table width
+  const thead = document.createElement("thead");
+  const tbody = document.createElement("tbody");
+  table.appendChild(thead);
+  table.appendChild(tbody);
+
+  // Create header row
+  const headerRow = document.createElement("tr");
+  const emptyHeader = document.createElement("th"); // Empty header for shifting
+  const valueHeader = document.createElement("th");
+  valueHeader.textContent = "Value";
+  const scoreHeader = document.createElement("th");
+  scoreHeader.textContent = "Score";
+  const seenHeader = document.createElement("th");
+  seenHeader.textContent = "Seen";
+  // Apply inline CSS for column width
+  valueHeader.style.width = '40%'; // Adjust as needed
+  scoreHeader.style.width = '30%'; // Adjust as needed
+  seenHeader.style.width = '30%'; // Adjust as needed
+
+  headerRow.appendChild(emptyHeader); // Add empty cell for shifting
+  headerRow.appendChild(valueHeader);
+  headerRow.appendChild(scoreHeader);
+  headerRow.appendChild(seenHeader);
+  thead.appendChild(headerRow);
+
+  // Sort and iterate through values to populate the table
+  const sortedValues = Object.keys(valueScores).sort((a, b) => valueScores[b] - valueScores[a]);
+  sortedValues.forEach((value) => {
+    const row = document.createElement("tr");
+
+    const emptyCell = document.createElement("td"); // Empty cell for shifting
+    const valueCell = document.createElement("td");
+    valueCell.textContent = value;
+    const scoreCell = document.createElement("td");
+    scoreCell.textContent = valueScores[value].toFixed(4);
+    const seenCell = document.createElement("td");
+    seenCell.textContent = valueGraph[value].appearances;
+
+    // Apply the same inline CSS for data cells
+    valueCell.style.width = '40%'; // Adjust as needed
+    scoreCell.style.width = '30%'; // Adjust as needed
+    seenCell.style.width = '30%'; // Adjust as needed
+
+    row.appendChild(emptyCell); // Add empty cell for shifting
+    row.appendChild(valueCell);
+    row.appendChild(scoreCell);
+    row.appendChild(seenCell);
+
+    tbody.appendChild(row);
+  });
+
+  // Append the table to the rankingDiv
+  rankingDiv.appendChild(table);
+}
+
+
+
+        document
+          .getElementById("resetButton")
+          .addEventListener("click", resetState);
+        loadState();
+        updateQuestion();
+        updateRanking();
+      </script>
+    </body>
+  </html>
+</html>

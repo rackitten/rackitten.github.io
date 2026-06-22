@@ -5,400 +5,317 @@
     <meta charset="utf-8">
     <title>This is what Heaven looks like</title>
   </head>
-  <body style="display:block; margin:0; overflow:hidden;">
+  <body style="display:block; margin:0; overflow:hidden; background:#000;">
     <canvas id="myCanvas" style="display:block; width:100vw; height:100vh;"></canvas>
+    <div id="hud" style="position:fixed; left:8px; bottom:8px; font:12px monospace; color:#0f0; opacity:.6; pointer-events:none;"></div>
     <script type="module">
-        // Get the canvas element
+        // ─────────────────────────────────────────────────────────────────────
+        //  Near-infinite Mandelbrot zoom via perturbation theory.
+        //
+        //  CPU keeps the view CENTER at double-double (~32 digit) precision and
+        //  computes a reference orbit X[n] = X[n-1]^2 + C_center there. The GPU
+        //  then iterates only each pixel's tiny offset delta from that orbit:
+        //      delta -> 2*X[n]*delta + delta^2 + c
+        //  which stays small enough to live happily in f32. Zhuoran rebasing
+        //  ( reset delta<-X[n]+delta, n<-0 when |X[n]+delta| < |delta| ) makes a
+        //  single reference orbit cover the whole image without glitch bands.
+        // ─────────────────────────────────────────────────────────────────────
+
         const canvas = document.getElementById('myCanvas');
-        
-        // Function to resize the canvas to full window size
+        const hud = document.getElementById('hud');
+
+        // Surface failures on-screen instead of leaving a silent black canvas.
+        function showError(msg) {
+            console.error(msg);
+            let box = document.getElementById('err');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'err';
+                box.style.cssText = "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;"
+                    + "padding:24px;font:14px/1.5 monospace;color:#f55;background:#111;white-space:pre-wrap;text-align:center;";
+                document.body.appendChild(box);
+            }
+            box.textContent = "⚠ " + msg;
+        }
+        window.addEventListener('error', (e) => showError(e.message));
+        window.addEventListener('unhandledrejection', (e) => showError((e.reason && e.reason.message) || String(e.reason)));
+
+        // Cap the internal render resolution so we never melt the GPU. The
+        // canvas still fills the window via CSS (it just upscales). Bump
+        // MAX_DIM up if your GPU is beefy and you want crisper output.
+        const MAX_DIM = 1000;
         function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            const scale = Math.min(1, MAX_DIM / Math.max(window.innerWidth, window.innerHeight));
+            canvas.width = Math.max(1, Math.round(window.innerWidth * scale));
+            canvas.height = Math.max(1, Math.round(window.innerHeight * scale));
         }
-
-        // Resize the canvas when the window is resized
         window.addEventListener('resize', resizeCanvas, false);
+        resizeCanvas();
 
-        // Initial resize
-        resizeCanvas(); 
-        let xx = window.innerWidth / 2;
-        let yy = window.innerHeight / 2;
-        console.log("xx", xx, yy);
-
-      
-        const UPDATE_INTERVAL = 50; // Update every 200ms (5 times/sec)
-        let step = 0; // Track how many simulation steps have been run
-
-        if (!navigator.gpu) {
-            throw new Error("WebGPU not supported on this browser.");
+        // ── double-double arithmetic (a value is a [hi, lo] pair of doubles) ──
+        const SPLIT = 134217729; // 2^27 + 1, for Veltkamp splitting
+        function twoSum(a, b) { const s = a + b; const bb = s - a; return [s, (a - (s - bb)) + (b - bb)]; }
+        function quickTwoSum(a, b) { const s = a + b; return [s, b - (s - a)]; }
+        function split(a) { const c = SPLIT * a; const hi = c - (c - a); return [hi, a - hi]; }
+        function twoProd(a, b) {
+            const p = a * b;
+            const [ah, al] = split(a), [bh, bl] = split(b);
+            return [p, ((ah * bh - p) + ah * bl + al * bh) + al * bl];
         }
-        const adapter = await navigator.gpu.requestAdapter({
-            powerPreference: "high-performance"
-        });
-        if (!adapter) {
-        throw new Error("No appropriate GPUAdapter found.");
-        }
-        console.log(adapter);
+        function ddAdd(a, b) { let [s, e] = twoSum(a[0], b[0]); e += a[1] + b[1]; return quickTwoSum(s, e); }
+        function ddSub(a, b) { return ddAdd(a, [-b[0], -b[1]]); }
+        function ddMul(a, b) { let [p, e] = twoProd(a[0], b[0]); e += a[0] * b[1] + a[1] * b[0]; return quickTwoSum(p, e); }
+        function ddMulD(a, s) { let [p, e] = twoProd(a[0], s); e += a[1] * s; return quickTwoSum(p, e); }
+
+        // ── WebGPU setup ──
+        if (!navigator.gpu) throw new Error("WebGPU not supported on this browser.");
+        const adapter = await navigator.gpu.requestAdapter({ powerPreference: "high-performance" });
+        if (!adapter) throw new Error("No appropriate GPUAdapter found.");
         const device = await adapter.requestDevice();
-        console.log(device);
         const context = canvas.getContext("webgpu");
-
         const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
-        context.configure({
-            device: device,
-            format: canvasFormat,
-        });
-    
+        context.configure({ device, format: canvasFormat });
 
+        // ── view state (double-double center + double-precision width) ──
+        const FULL_WIDTH = 4.0;     // real-axis span showing the whole set
+        const SHRINK = 0.99;        // per-frame zoom factor (smaller = faster)
+        const MIN_WIDTH = 1e-30;    // floor where double-double precision runs out
+        const MAX_ITER_CAP = 500;   // hard cap on iterations/pixel (keeps GPU load safe)
 
-  
-        const GRID_SIZE = 128;
-        // Create a uniform buffer that describes the grid.
-        const uniformArray = new Float32Array([canvas.width, canvas.height]);
-        console.log("Canvas width: " + canvas.width + " Canvas height: " + canvas.height);
+        let centerX = [0, 0], centerY = [0, 0];   // dd
+        let viewWidth = FULL_WIDTH;
+        // Default zoom target: a detail-rich point in Seahorse Valley.
+        let targetX = [-0.7436438870371587, -4.7527e-18];
+        let targetY = [0.13182590420531197, 8.01e-19];
+
+        // ── GPU buffers ──
+        // Uniforms: res.xy, viewWidth, aspect(=h/w), maxIter, refLen  (+pad -> 32B)
+        const uniformData = new Float32Array(8);
         const uniformBuffer = device.createBuffer({
-        label: "Grid Uniforms",
-        size: uniformArray.byteLength,
-        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            label: "Params",
+            size: uniformData.byteLength,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
-        device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
-        // Create an array representing the active state of each cell.
-        const cellStateArray = new Float32Array(2 * 4 + 2 + 1); // four corners, plus click center plus zoom
-        // Create two storage buffers to hold the cell state.
-        const cellStateStorage = [
-            device.createBuffer({
-                label: "Cell State A",
-                size: cellStateArray.byteLength,
-                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-            }),
-            device.createBuffer({
-                label: "Cell State B",
-                size: cellStateArray.byteLength,
-                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-            })
-        ];
-        // Set each cell to a random state, then copy the JavaScript array 
-        // into the storage buffer.
-        for (let i = 0; i < cellStateArray.length; ++i) {
-            cellStateArray[i] = 1.;
+
+        // Reference orbit: interleaved f32 [Xr0, Xi0, Xr1, Xi1, ...].
+        const refData = new Float32Array(2 * MAX_ITER_CAP);
+        const refBuffer = device.createBuffer({
+            label: "Reference orbit",
+            size: refData.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+        });
+
+        // Compute the reference orbit at double-double precision; store hi parts
+        // as f32. Returns the orbit length (stops once it escapes |X|>2).
+        function computeReference(cx, cy, maxIter) {
+            let zx = [0, 0], zy = [0, 0];
+            let len = 0;
+            for (let k = 0; k < maxIter; k++) {
+                refData[2 * k] = zx[0];
+                refData[2 * k + 1] = zy[0];
+                len = k + 1;
+                if (zx[0] * zx[0] + zy[0] * zy[0] > 4.0) break; // reference escaped
+                // z = z^2 + c
+                const zx2 = ddSub(ddMul(zx, zx), ddMul(zy, zy));
+                const zy2 = ddMulD(ddMul(zx, zy), 2.0);
+                zx = ddAdd(zx2, cx);
+                zy = ddAdd(zy2, cy);
+            }
+            return Math.max(len, 2);
         }
-        // Top left, bottom left, bottom right, top right
-        // Top left
-        cellStateArray[0] = -window.innerWidth / window.innerWidth / 0.5;
-        cellStateArray[1] = window.innerHeight / window.innerWidth / 0.5;
-        // Bottom left
-        cellStateArray[2] = -window.innerWidth / window.innerWidth / 0.5;
-        cellStateArray[3] = -window.innerHeight / window.innerWidth / 0.5;
-        // Bottom right
-        cellStateArray[4] = window.innerWidth / window.innerWidth / 0.5;
-        cellStateArray[5] = -window.innerHeight / window.innerWidth / 0.5;
-        // Top right
-        cellStateArray[6] = window.innerWidth / window.innerWidth / 0.5;
-        cellStateArray[7] = window.innerHeight / window.innerWidth / 0.5;
 
-        cellStateArray[8] = xx;
-        cellStateArray[9] = yy;
-                    
-        // cellStateArray[0] = 1.;
-        device.queue.writeBuffer(cellStateStorage[0], 0, cellStateArray);
-        // cellStateArray[0] = 1.;
-        device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
-
-        canvas.addEventListener('click', (event) => {
-            xx = event.clientX;
-            yy = event.clientY;
-            cellStateArray[8] = xx;
-            cellStateArray[9] = yy;
-            device.queue.writeBuffer(cellStateStorage[0], 32, cellStateArray, 8);
-            device.queue.writeBuffer(cellStateStorage[1], 32, cellStateArray, 8);
-            console.log(`Click coordinates: X=${xx}, Y=${yy}`);
-         });
-
-        const vertices = new Float32Array([
-            //   X,    Y,
-            -1., -1., // Triangle 1 (Blue)
-            1., -1.,
-            1.,  1.,
-            -1., -1., // Triangle 2 (Red)
-            1.,  1.,
-            -1.,  1.,
-        ]);
-        const vertexBuffer = device.createBuffer({
-            label: "Cell vertices", 
-            size: vertices.byteLength,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
-        device.queue.writeBuffer(vertexBuffer, /*bufferOffset=*/0, vertices);
-
-        const vertexBufferLayout = {
-            arrayStride: 8,
-            attributes: [{
-                format: "float32x2",
-                offset: 0,
-                shaderLocation: 0, // Position, see vertex shader
-            }],
-        };
-        const WORKGROUP_SIZE = 8;
-
-
-        const cellShaderModule = device.createShaderModule({
-            label: "Cell shader",
-            code:`
-
-            struct VertexInput {
-                @location(0) pos: vec2f,
-                @builtin(instance_index) instance: u32,
+        const shaderModule = device.createShaderModule({
+            label: "Perturbation Mandelbrot",
+            code: `
+            struct Params {
+                res: vec2f,
+                viewWidth: f32,
+                aspect: f32,
+                maxIter: f32,
+                refLen: f32,
             };
 
-            struct VertexOutput {
-                @builtin(position) pos: vec4f,
-                @location(0) cell: vec2f, // New line!
-            };
+            @group(0) @binding(0) var<uniform> P: Params;
+            @group(0) @binding(1) var<storage> orbit: array<f32>;
 
-            @group(0) @binding(0) var<uniform> grid: vec2f;
-            @group(0) @binding(1) var<storage> cellState: array<f32>;
-            @group(0) @binding(2) var<storage, read_write> cellStateOut: array<f32>;
- 
-
-            @compute
-            @workgroup_size(${WORKGROUP_SIZE}, ${WORKGROUP_SIZE})
-            fn computeMain(@builtin(global_invocation_id) cell: vec3u) {
-                // four corners, plus click center plus zoom
-                var tl_cart = vec2<f32>(cellState[0], cellState[1]);
-                var bl_cart = vec2<f32>(cellState[2], cellState[3]);
-                var br_cart = vec2<f32>(cellState[4], cellState[5]);
-                var tr_cart = vec2<f32>(cellState[6], cellState[7]);
-                var click_pixels = vec2<f32>(cellState[8], -cellState[9]);
-                var zoom = 1.01;
-
-                // Zoom all corners in towards the center
-
-                // First calculate center in cartesian
-                var click_normalized = click_pixels / grid; // click_normalized is now in range (0, 1)
-                var x = click_normalized[0];
-                var y = click_normalized[1];
-                var width = tr_cart[0] - tl_cart[0];
-                var height = bl_cart[1] - tl_cart[1];
-                var center_cart = vec2<f32>(x * width + bl_cart[0], y * height + bl_cart[1]);
-
-                var move_vector = center_cart - (tl_cart + br_cart) / 2;
-
-                // Zoom by shift, scale, shift back
-                var zoomed_tl = (tl_cart - center_cart) * 1 / zoom + center_cart + move_vector;
-                var zoomed_bl = (bl_cart - center_cart) * 1 / zoom + center_cart + move_vector;
-                var zoomed_br = (br_cart - center_cart) * 1 / zoom + center_cart + move_vector;
-                var zoomed_tr = (tr_cart - center_cart) * 1 / zoom + center_cart + move_vector;
-
-
-                //zoomed_tl += center_cart;
-                //var zoomed_tl = tl_cart;
-                //var zoomed_bl = bl_cart;
-                //var zoomed_br = br_cart;
-                //var zoomed_tr = tr_cart;
-
-
-                cellStateOut[0] = zoomed_tl[0];
-                cellStateOut[1] = zoomed_tl[1];
-                cellStateOut[2] = zoomed_bl[0];
-                cellStateOut[3] = zoomed_bl[1];
-                cellStateOut[4] = zoomed_br[0];
-                cellStateOut[5] = zoomed_br[1];
-                cellStateOut[6] = zoomed_tr[0];
-                cellStateOut[7] = zoomed_tr[1];
-                // Set the click to be in the center
-                cellStateOut[8] = grid.x / 2;
-                cellStateOut[9] = grid.y / 2;
-            }
-            
-
+            // Full-screen triangle from the vertex index — no vertex buffer needed.
             @vertex
-            fn vertexMain(@location(0) pos: vec2f, 
-                          @builtin(instance_index) instance: u32) ->VertexOutput  {
-                var output: VertexOutput;
-                output.cell = vec2f(-1, -1);
-                output.pos = vec4f(pos, 0, 1);
-                return output;
+            fn vertexMain(@builtin(vertex_index) vi: u32) -> @builtin(position) vec4f {
+                var p = array<vec2f, 3>(vec2f(-1.0, -1.0), vec2f(3.0, -1.0), vec2f(-1.0, 3.0));
+                return vec4f(p[vi], 0.0, 1.0);
             }
 
-            const minColor = vec3<f32>(0.0, 0.0, 1.0); // Blue
-            const maxColor = vec3<f32>(1.0, 0.0, 0.0); // Red
-
-            // This function interpolates between two colors
-            fn interpolateInSet(minColor: vec3<f32>, maxColor: vec3<f32>, factor: f32) -> vec3<f32> {
-                return minColor + factor * (maxColor - minColor);
-            }
-
-            fn interpolateOutSet(minColor: vec3<f32>, maxColor: vec3<f32>, factor: f32) -> vec3<f32> {
-                return minColor + factor * (maxColor - minColor);
+            fn palette(t: f32) -> vec3f {
+                return 0.5 + 0.5 * cos(6.28318 * (t + vec3f(0.0, 0.33, 0.67)));
             }
 
             @fragment
-            fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
-                var tl_cart = vec2<f32>(cellState[0], cellState[1]);
-                var bl_cart = vec2<f32>(cellState[2], cellState[3]);
-                var br_cart = vec2<f32>(cellState[4], cellState[5]);
-                var tr_cart = vec2<f32>(cellState[6], cellState[7]);
+            fn fragmentMain(@builtin(position) fragPos: vec4f) -> @location(0) vec4f {
+                // Pixel offset c from the reference center (small -> f32 is fine).
+                let uv = fragPos.xy / P.res;
+                let cr = (uv.x - 0.5) * P.viewWidth;
+                let ci = (0.5 - uv.y) * P.viewWidth * P.aspect;
 
-                var x = input.pos.x / grid.x;
-                var y = -input.pos.y / grid.y;
-                var width = tr_cart[0] - tl_cart[0];
-                var height = bl_cart[1] - tl_cart[1];
-                var cart = vec2<f32>(x * width + bl_cart[0], y * height + bl_cart[1]);
+                let maxI = u32(P.maxIter);
+                let refLen = u32(P.refLen);
 
-                var r = cart.x;
-                var i = cart.y;
+                var dr = 0.0;  var di = 0.0;   // delta (perturbation)
+                var m = 0u;                    // reference orbit index
+                var iter = 0u;
+                var escaped = false;
+                var zmag2 = 0.0;
 
-    
-                // Draw some grid lines, just for fun
-                if (abs(r) <= .002 || abs(i) <= .002) {
-                     return vec4f(0.0, 1.0, 0.0, 1.0);
-                }
+                loop {
+                    if (iter >= maxI) { break; }
 
-                var iterations = 30;
-                var maxDelta = 4.0;
+                    let Xr = orbit[2u * m];
+                    let Xi = orbit[2u * m + 1u];
 
-                // Do the mandelbrot iterations
+                    // delta -> 2*X[m]*delta + delta^2 + c
+                    let dr2 = dr * dr - di * di;
+                    let di2 = 2.0 * dr * di;
+                    let crossR = 2.0 * (Xr * dr - Xi * di);
+                    let crossI = 2.0 * (Xr * di + Xi * dr);
+                    dr = crossR + dr2 + cr;
+                    di = crossI + di2 + ci;
+                    m = m + 1u;
+                    iter = iter + 1u;
 
-                var z_init = vec2f(r, i);
-                var z = vec2f(r, i);
-                var prev = 0.0;
-                var prev_2 = 0.0;
-                for (var j = 0; j < iterations; j++) {
-                    var r2 = z[0] * z[0];
-                    var i2 = z[1] * z[1];
-                    if (r2 + i2 > 4.0){
-                        let color = interpolateOutSet(maxColor, minColor, abs(prev - prev_2) / maxDelta);
-                        return vec4f(color, 1.0);
+                    // Full value z = X[m] + delta.
+                    let Zr = orbit[2u * m] + dr;
+                    let Zi = orbit[2u * m + 1u] + di;
+                    zmag2 = Zr * Zr + Zi * Zi;
+                    if (zmag2 > 4.0) { escaped = true; break; }
+
+                    // Zhuoran rebasing: keep delta small + dodge glitches.
+                    let dmag2 = dr * dr + di * di;
+                    if (zmag2 < dmag2 || m + 1u >= refLen) {
+                        dr = Zr; di = Zi; m = 0u;
                     }
-                    z = vec2f(r2 - i2, 2 * z[0] * z[1]) + z_init;
-                    prev_2 = prev;
-                    prev = r2 + i2;
                 }
-                let color = interpolateInSet(minColor, maxColor, abs(prev - prev_2) / maxDelta);
 
-                return vec4f(color, 1.0);
+                if (!escaped) {
+                    return vec4f(0.0, 0.0, 0.0, 1.0); // inside the set
+                }
+
+                // Smooth (continuous) iteration count for banding-free color.
+                let logZn = 0.5 * log(zmag2);
+                let nu = log(logZn / log(2.0)) / log(2.0);
+                let sn = max(f32(iter) + 1.0 - nu, 0.0);
+                return vec4f(palette(sn * 0.035 + 0.5), 1.0);
             }
             `
         });
 
         const bindGroupLayout = device.createBindGroupLayout({
-            label: "Cell Bind Group Layout",
-            entries: [{
-                binding: 0,
-                visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE | GPUShaderStage.FRAGMENT,
-                buffer: {} // Grid uniform buffer
-            }, {
-                binding: 1,
-                visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE | GPUShaderStage.FRAGMENT,
-                buffer: { type: "read-only-storage"} // Cell state input buffer
-            }, {
-                binding: 2,
-                visibility: GPUShaderStage.COMPUTE | GPUShaderStage.FRAGMENT,
-                buffer: { type: "storage"} // Cell state output buffer
-            }]
+            label: "Bind group layout",
+            entries: [
+                { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: {} },
+                { binding: 1, visibility: GPUShaderStage.FRAGMENT, buffer: { type: "read-only-storage" } },
+            ]
         });
-
-        const pipelineLayout = device.createPipelineLayout({
-            label: "Cell Pipeline Layout",
-            bindGroupLayouts: [ bindGroupLayout ],
-        });
-
-        const cellPipeline = device.createRenderPipeline({
-            label: "Cell pipeline",
-            layout: pipelineLayout,
-            vertex: {
-                module: cellShaderModule,
-                entryPoint: "vertexMain",
-                buffers: [vertexBufferLayout]
-            },
-            fragment: {
-                module: cellShaderModule,
-                entryPoint: "fragmentMain",
-                targets: [{
-                format: canvasFormat
-                }]
-            }
-        });
-
-        const simulationPipeline = device.createComputePipeline({
-            label: "Simulation pipeline",
-            layout: pipelineLayout,
-            compute: {
-                module: cellShaderModule,
-                entryPoint: "computeMain",
-            }
-        });
-    
-        const bindGroups = [
-            device.createBindGroup({
-                label: "Cell renderer bind group A",
-                layout: bindGroupLayout, // Updated Line
-                entries: [{
-                    binding: 0,
-                    resource: { buffer: uniformBuffer }
-                }, {
-                    binding: 1,
-                    resource: { buffer: cellStateStorage[0] }
-                }, {
-                    binding: 2, // New Entry
-                    resource: { buffer: cellStateStorage[1] }
-                }],
-            }),
-            device.createBindGroup({
-                label: "Cell renderer bind group B",
-                layout: bindGroupLayout, // Updated Line
-                entries: [{
-                    binding: 0,
-                    resource: { buffer: uniformBuffer }
-                }, {
-                    binding: 1,
-                    resource: { buffer: cellStateStorage[1] }
-                }, {
-                    binding: 2, // New Entry
-                    resource: { buffer: cellStateStorage[0] }
-                }],
-            }),
-        ];
-        
-        // Move all of our rendering code into a function
-        function updateGrid() {            
-            // Start a render pass 
-            const encoder = device.createCommandEncoder();
-            const computePass = encoder.beginComputePass();
-            computePass.setPipeline(simulationPipeline);
-            computePass.setBindGroup(0, bindGroups[step % 2]);
-    
-            const workgroupCount = Math.ceil(GRID_SIZE / WORKGROUP_SIZE);
-            computePass.dispatchWorkgroups(workgroupCount, workgroupCount);
-
-            computePass.end();
-            step++; // Increment the step count
-
-            const pass = encoder.beginRenderPass({
-                colorAttachments: [{
-                view: context.getCurrentTexture().createView(),
-                loadOp: "clear",
-                clearValue: { r: 0, g: 0.3, b: 0.0, a: 1.0 },
-                storeOp: "store",
-                }]
-            });
-
-            // Draw the grid.
-            pass.setPipeline(cellPipeline);
-            pass.setBindGroup(0, bindGroups[step % 2]); // Updated!
-            pass.setVertexBuffer(0, vertexBuffer);
-            pass.draw(vertices.length / 2, 1);
-
-            // End the render pass and submit the command buffer
-            pass.end();
-            device.queue.submit([encoder.finish()]);
+        // Report any WGSL compilation problems explicitly.
+        const compInfo = await shaderModule.getCompilationInfo();
+        for (const m of compInfo.messages) {
+            console[m.type === 'error' ? 'error' : 'log'](`WGSL ${m.type} @${m.lineNum}:${m.linePos} — ${m.message}`);
+        }
+        if (compInfo.messages.some(m => m.type === 'error')) {
+            showError("Shader compile error (see console):\n" + compInfo.messages.filter(m => m.type === 'error').map(m => m.message).join("\n"));
         }
 
-        // Schedule updateGrid() to run repeatedly
-        setInterval(updateGrid, UPDATE_INTERVAL);
+        device.pushErrorScope('validation');
+        const pipeline = device.createRenderPipeline({
+            label: "Mandelbrot pipeline",
+            layout: device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] }),
+            vertex: { module: shaderModule, entryPoint: "vertexMain" },
+            fragment: { module: shaderModule, entryPoint: "fragmentMain", targets: [{ format: canvasFormat }] },
+        });
+        device.popErrorScope().then((err) => { if (err) showError("Pipeline error:\n" + err.message); });
+        const bindGroup = device.createBindGroup({
+            label: "Bind group",
+            layout: bindGroupLayout,
+            entries: [
+                { binding: 0, resource: { buffer: uniformBuffer } },
+                { binding: 1, resource: { buffer: refBuffer } },
+            ],
+        });
 
-      // Your WebGPU code will begin here!
+        // Click to aim the zoom at the complex point under the cursor.
+        canvas.addEventListener('click', (event) => {
+            // Normalize against the canvas's ON-SCREEN size, not its (smaller,
+            // capped) backing-store resolution — otherwise the click maps to the
+            // wrong complex point and the zoom flies off target.
+            const rect = canvas.getBoundingClientRect();
+            const px = (event.clientX - rect.left) / rect.width;   // 0..1
+            const py = (event.clientY - rect.top) / rect.height;   // 0..1
+            const dcx = (px - 0.5) * viewWidth;
+            const dcy = (0.5 - py) * viewWidth * (canvas.height / canvas.width);
+            targetX = ddAdd(centerX, [dcx, 0]);
+            targetY = ddAdd(centerY, [dcy, 0]);
+        });
+
+        // If the GPU driver ever resets the device, stop the loop instead of
+        // hammering it further.
+        let running = true;
+        device.lost.then((info) => {
+            running = false;
+            showError("GPU device was lost (" + (info.message || info.reason) + ").\nThe render was too heavy — lower MAX_DIM / MAX_ITER_CAP and reload.");
+        });
+
+        async function frame() {
+            if (!running) return;
+            // Don't burn the GPU while the tab is in the background.
+            if (document.hidden) { setTimeout(() => requestAnimationFrame(frame), 300); return; }
+
+            // Home the center toward the target while shrinking the view, so the
+            // target stays put on screen as everything zooms into it.
+            centerX = ddAdd(targetX, ddMulD(ddSub(centerX, targetX), SHRINK));
+            centerY = ddAdd(targetY, ddMulD(ddSub(centerY, targetY), SHRINK));
+            viewWidth *= SHRINK;
+            if (viewWidth < MIN_WIDTH) {        // hit the precision floor -> loop out
+                viewWidth = FULL_WIDTH;
+                centerX = [0, 0];
+                centerY = [0, 0];
+            }
+
+            const depth = Math.log10(FULL_WIDTH / viewWidth);
+            const maxIter = Math.min(MAX_ITER_CAP, Math.round(120 + 22 * depth));
+            const refLen = computeReference(centerX, centerY, maxIter);
+
+            uniformData[0] = canvas.width;
+            uniformData[1] = canvas.height;
+            uniformData[2] = viewWidth;
+            uniformData[3] = canvas.height / canvas.width;
+            uniformData[4] = maxIter;
+            uniformData[5] = refLen;
+            device.queue.writeBuffer(uniformBuffer, 0, uniformData);
+            device.queue.writeBuffer(refBuffer, 0, refData, 0, 2 * refLen);
+
+            const encoder = device.createCommandEncoder();
+            const pass = encoder.beginRenderPass({
+                colorAttachments: [{
+                    view: context.getCurrentTexture().createView(),
+                    loadOp: "clear",
+                    clearValue: { r: 0, g: 0, b: 0, a: 1 },
+                    storeOp: "store",
+                }]
+            });
+            pass.setPipeline(pipeline);
+            pass.setBindGroup(0, bindGroup);
+            pass.draw(3);
+            pass.end();
+            device.queue.submit([encoder.finish()]);
+
+            hud.textContent = `zoom 1 : ${(FULL_WIDTH / viewWidth).toExponential(1)}   iters ${maxIter}   ${canvas.width}×${canvas.height}   (click to aim)`;
+
+            // Wait until the GPU has actually finished this frame before queuing
+            // the next one. This is the key safeguard: it prevents frames from
+            // backing up and overwhelming/hanging the GPU.
+            await device.queue.onSubmittedWorkDone();
+            if (running) requestAnimationFrame(frame);
+        }
+
+        requestAnimationFrame(frame);
     </script>
   </body>
 </html>
